@@ -21,12 +21,11 @@ app = FastAPI(
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://langgraph-email-automation-ocy28jn3p-tushars-projects-ec14c6a7.vercel.app",
 ]
 frontend_url = os.getenv("FRONTEND_URL")
 if frontend_url:
     origins.append(frontend_url)
-else:
-    origins.append("*") # Allow all by default for simple demonstration/testing
 
 app.add_middleware(
     CORSMiddleware,
