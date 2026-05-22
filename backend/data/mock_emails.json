@@ -1,0 +1,56 @@
+[
+  {
+    "id": "mock-1",
+    "sender": "john.doe@example.com",
+    "subject": "Product Inquiry - Agentia Services",
+    "body": "Hello! I am interested in Agentia. Can you please tell me about your pricing plans? Thanks!",
+    "threadId": "mock-thread-1",
+    "messageId": "mock-msg-1",
+    "references": ""
+  },
+  {
+    "id": "mock-2",
+    "sender": "jane.smith@example.com",
+    "subject": "Refund Request",
+    "body": "Hi, I purchased your services yesterday but they did not meet my expectations. I would like to request a full refund of my payment.",
+    "threadId": "mock-thread-2",
+    "messageId": "mock-msg-2",
+    "references": ""
+  },
+  {
+    "id": "mock-3",
+    "sender": "tech_guy@example.com",
+    "subject": "Technical Support - Email Timeout",
+    "body": "Hello, I am having trouble connecting my email account. The settings page keeps showing a timeout error after 30 seconds of spinning.",
+    "threadId": "mock-thread-3",
+    "messageId": "mock-msg-3",
+    "references": ""
+  },
+  {
+    "id": "mock-4",
+    "sender": "furious_biz@example.com",
+    "subject": "URGENT: System Down Feedback",
+    "body": "This is unacceptable! Your system has been down for hours and I'm losing business. Fix this immediately!",
+    "threadId": "mock-thread-4",
+    "messageId": "mock-msg-4",
+    "references": ""
+  },
+  {
+    "id": "mock-5",
+    "sender": "applicant@university.edu",
+    "subject": "Summer Internship Inquiry - Software Engineering",
+    "body": "Dear Hiring Team, I am a junior software engineer interested in applying for a summer internship at your agency. Here is my resume summary: I have built several projects using FastAPI and React, and I'd love to learn from your team.",
+    "threadId": "mock-thread-5",
+    "messageId": "mock-msg-5",
+    "references": ""
+  },
+  {
+    "id": "mock-6",
+    "sender": "spammer999@spammail.com",
+    "subject": "CONGRATULATIONS!!! CLAIM $1000 NOW",
+    "body": "CONGRATULATIONS! You have won a $1,000 gift card. Click here to claim your reward! Limited time offer!",
+    "threadId": "mock-thread-6",
+    "messageId": "mock-msg-6",
+    "references": ""
+  }
+]
