@@ -38,8 +38,8 @@
   {
     "id": "mock-5",
     "sender": "applicant@university.edu",
-    "subject": "Summer Internship Inquiry - Software Engineering",
-    "body": "Dear Hiring Team, I am a junior software engineer interested in applying for a summer internship at your agency. Here is my resume summary: I have built several projects using FastAPI and React, and I'd love to learn from your team.",
+    "subject": "Summer Internship Inquiry",
+    "body": "Dear Hiring Team, I am a university student interested in applying for a summer internship at your agency. I am eager to gain work experience and would love the opportunity to contribute to your team. Could you let me know if you have any openings available? Thank you.",
     "threadId": "mock-thread-5",
     "messageId": "mock-msg-5",
     "references": ""

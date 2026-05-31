@@ -237,15 +237,23 @@ class Nodes:
         new_messages = writer_messages + [feedback_msg]
         status = "sendable" if review.send else "not sendable"
 
-        review_confidence = float(getattr(review, "confidence", 0.0))
+        # Default to 0.8 when proofreader says sendable but omits confidence (LLM calibration gap)
+        raw_confidence = getattr(review, "confidence", None)
+        if raw_confidence is None or (review.send and float(raw_confidence) == 0.0):
+            review_confidence = 0.8
+        else:
+            review_confidence = float(raw_confidence)
+
         trials = state.get("trials", 1)
         response_confidence = self.calculate_response_confidence(review_confidence, trials, review.send)
 
-        # Set status to approved if it is sendable and meets the confidence threshold
+        # Mark as approved when proofreader says sendable and force_review is off.
+        # Confidence gates use a lenient floor (0.5) to catch true failures only —
+        # Llama 3.3 is calibrated conservatively and routinely returns 0.65–0.75.
         status_update = {}
-        if review.send:
+        if review.send and not state.get("force_review", False):
             category_conf = state.get("category_confidence", 0.0)
-            if response_confidence >= 0.75 and category_conf >= 0.75 and not state.get("force_review", False):
+            if response_confidence >= 0.5 and category_conf >= 0.5:
                 status_update["workflow_status"] = "approved"
 
         ret_val = {
@@ -276,13 +284,19 @@ class Nodes:
 
         email_sendable = state.get("sendable", False)
         if email_sendable:
-            response_conf = state.get("response_confidence", 0.0)
-            category_conf = state.get("category_confidence", 0.0)
-            if response_conf < 0.75 or category_conf < 0.75 or state.get("force_review", False):
-                print(Fore.YELLOW + f"Confidence below threshold or force_review set (category: {category_conf:.2f}, response: {response_conf:.2f}). Triggering human review..." + Style.RESET_ALL)
+            # Force Human Review toggle takes absolute priority
+            if state.get("force_review", False):
+                print(Fore.YELLOW + "force_review enabled — routing to human review." + Style.RESET_ALL)
                 return "review"
 
-            print(Fore.GREEN + "Email is good, ready to be sent!!!" + Style.RESET_ALL)
+            response_conf = state.get("response_confidence", 0.0)
+            category_conf = state.get("category_confidence", 0.0)
+            # Only block auto-send for very low confidence (< 0.5) which signals a true failure
+            if response_conf < 0.5 or category_conf < 0.5:
+                print(Fore.YELLOW + f"Very low confidence (category: {category_conf:.2f}, response: {response_conf:.2f}) — routing to human review." + Style.RESET_ALL)
+                return "review"
+
+            print(Fore.GREEN + "Email approved by AI — ready to send." + Style.RESET_ALL)
             return "send"
         elif state.get("trials", 0) >= 3:
             print(Fore.RED + "Email is not good, we reached max trials must stop!!!" + Style.RESET_ALL)
