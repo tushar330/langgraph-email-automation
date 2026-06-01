@@ -7,10 +7,12 @@ import SimulationControls from '@/components/simulation/SimulationControls';
 import MetricsPanel from '@/components/dashboard/MetricsPanel';
 import WorkflowGraph from '@/components/workflow/WorkflowGraph';
 import LogsTimeline from '@/components/workflow/LogsTimeline';
-import { AlertCircle, Play, Info, Terminal } from 'lucide-react';
+import { AlertCircle, Play, Info, ShieldAlert, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 export default function SimulationPage() {
   const { fetchEmails, error, currentExecution, isExecuting } = useWorkflowStore();
+  const needsReview = currentExecution?.workflow_status === 'needs_review';
 
   useEffect(() => {
     fetchEmails();
@@ -45,11 +47,35 @@ export default function SimulationPage() {
         </div>
       </div>
 
-      {/* Error alert if any */}
+      {/* Error alert */}
       {error && (
         <div className="flex items-center gap-3 p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-xs text-red-400">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
+        </div>
+      )}
+
+      {/* Human review required banner */}
+      {needsReview && (
+        <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-orange-500/30 bg-orange-500/5 shadow-[0_0_20px_rgba(255,107,0,0.05)]">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 shrink-0">
+              <ShieldAlert className="w-4 h-4 text-orange-400" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-orange-400 tracking-wide uppercase">Human Review Required</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                The AI draft confidence was below the auto-send threshold. An operator must review and approve or reject the reply before it is dispatched.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/review"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-500/10 border border-orange-500/30 hover:bg-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-wider transition-all shrink-0"
+          >
+            <span>Open Review Board</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
       )}
 

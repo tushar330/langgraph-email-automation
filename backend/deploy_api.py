@@ -79,6 +79,11 @@ def load_mock_emails() -> List[dict]:
         print(f"Error loading mock emails: {e}")
         return []
 
+@app.get("/health")
+def health_check():
+    """Lightweight ping endpoint used by the frontend to wake up the Render instance."""
+    return {"status": "ok"}
+
 @app.get("/simulation/emails", response_model=List[dict])
 def get_simulation_emails():
     """Retrieve the list of simulated mock emails."""

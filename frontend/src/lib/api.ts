@@ -46,6 +46,15 @@ export interface SimulationEmail {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export const api = {
+  async ping(): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/health`, { signal: AbortSignal.timeout(8000) });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  },
+
   async getSimulationEmails(): Promise<SimulationEmail[]> {
     const res = await fetch(`${API_BASE_URL}/simulation/emails`);
     if (!res.ok) {

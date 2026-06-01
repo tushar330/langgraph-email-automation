@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { useWorkflowStore } from '@/store/workflowStore';
-import { Mail, ArrowRight } from 'lucide-react';
+import { Mail, ArrowRight, Loader2, RefreshCw, WifiOff } from 'lucide-react';
 
 export default function EmailSelector() {
-  const { simulationEmails, selectedEmailId, setSelectedEmailId } = useWorkflowStore();
+  const { simulationEmails, selectedEmailId, setSelectedEmailId, isLoadingEmails, backendWaking, error, fetchEmails } = useWorkflowStore();
 
   const getCategoryTheme = (id: string) => {
     switch (id) {
@@ -41,7 +41,59 @@ export default function EmailSelector() {
 
       {/* List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {simulationEmails.map((email) => {
+
+        {/* Backend waking up */}
+        {backendWaking && (
+          <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
+            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            <div>
+              <p className="text-xs font-semibold text-white">Waking up backend...</p>
+              <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">
+                Render free tier sleeps after inactivity.<br />This takes ~20 seconds on first load.
+              </p>
+            </div>
+            <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden mt-1">
+              <div className="h-full bg-primary/60 animate-pulse w-3/4 rounded-full" />
+            </div>
+          </div>
+        )}
+
+        {/* Loading skeletons */}
+        {isLoadingEmails && !backendWaking && (
+          <>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-3.5 rounded-xl border border-white/5 bg-[#0b0b0b]/40 flex items-start gap-3.5 animate-pulse">
+                <div className="w-2 h-2 rounded-full bg-white/10 mt-1 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-2.5 bg-white/10 rounded w-3/4" />
+                  <div className="h-2 bg-white/5 rounded w-full" />
+                  <div className="h-2 bg-white/5 rounded w-2/3" />
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+
+        {/* Error + retry */}
+        {error && !isLoadingEmails && simulationEmails.length === 0 && (
+          <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
+            <WifiOff className="w-5 h-5 text-red-400" />
+            <div>
+              <p className="text-xs font-semibold text-red-400">Could not reach backend</p>
+              <p className="text-[10px] text-gray-500 mt-1">The server may still be starting up.</p>
+            </div>
+            <button
+              onClick={fetchEmails}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-300 hover:text-white hover:bg-white/10 transition-all"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Retry</span>
+            </button>
+          </div>
+        )}
+
+        {/* Email list */}
+        {!isLoadingEmails && simulationEmails.map((email) => {
           const isSelected = selectedEmailId === email.id;
           const theme = getCategoryTheme(email.id);
 
@@ -55,12 +107,9 @@ export default function EmailSelector() {
                   : 'border-white/5 bg-[#0b0b0b]/40 hover:border-white/10 hover:bg-[#0b0b0b]/75'
               }`}
             >
-              {/* Category Dot indicator */}
               <div className="flex flex-col items-center mt-1">
                 <span className={`w-2 h-2 rounded-full ${theme.color} ring-4 ring-white/5`} />
               </div>
-
-              {/* Text metadata */}
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-center gap-2">
                   <span className="text-[11px] font-bold text-gray-300 truncate tracking-wide">
@@ -77,8 +126,6 @@ export default function EmailSelector() {
                   {email.body}
                 </p>
               </div>
-
-              {/* Hover arrow */}
               <div className={`p-1.5 rounded-lg bg-white/5 border border-white/5 text-gray-500 transition-all self-center shrink-0 ${
                 isSelected ? 'text-primary border-primary/20 bg-primary/10' : 'opacity-0 group-hover:opacity-100'
               }`}>

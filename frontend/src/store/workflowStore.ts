@@ -6,6 +6,8 @@ interface WorkflowState {
   selectedEmailId: string | null;
   currentExecution: WorkflowExecutionResponse | null;
   isExecuting: boolean;
+  isLoadingEmails: boolean;
+  backendWaking: boolean;
   error: string | null;
   pausedExecutions: Record<string, WorkflowExecutionResponse>;
   lastPausedExecution: WorkflowExecutionResponse | null;
@@ -25,22 +27,47 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   selectedEmailId: null,
   currentExecution: null,
   isExecuting: false,
+  isLoadingEmails: false,
+  backendWaking: false,
   error: null,
   pausedExecutions: {},
   lastPausedExecution: null,
   activeStep: null,
 
   fetchEmails: async () => {
-    try {
-      set({ error: null });
-      const emails = await api.getSimulationEmails();
-      set({ simulationEmails: emails });
-      if (emails.length > 0 && !get().selectedEmailId) {
-        set({ selectedEmailId: emails[0].id });
+    set({ isLoadingEmails: true, error: null });
+
+    // Wake up Render's cold-start instance before fetching.
+    // Ping up to 6 times (30s total) then proceed regardless.
+    const alive = await api.ping();
+    if (!alive) {
+      set({ backendWaking: true });
+      let attempts = 0;
+      while (attempts < 5) {
+        await new Promise((r) => setTimeout(r, 5000));
+        const ok = await api.ping();
+        if (ok) break;
+        attempts++;
       }
-    } catch (err: any) {
-      set({ error: err.message || 'Failed to fetch emails' });
+      set({ backendWaking: false });
     }
+
+    // Retry the actual emails fetch up to 3 times
+    let lastError: string | null = null;
+    for (let i = 0; i < 3; i++) {
+      try {
+        const emails = await api.getSimulationEmails();
+        set({ simulationEmails: emails, isLoadingEmails: false, error: null });
+        if (emails.length > 0 && !get().selectedEmailId) {
+          set({ selectedEmailId: emails[0].id });
+        }
+        return;
+      } catch (err: any) {
+        lastError = err.message || 'Failed to fetch emails';
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+    }
+    set({ error: lastError, isLoadingEmails: false });
   },
 
   setSelectedEmailId: (id) => {
