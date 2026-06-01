@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useWorkflowStore } from '@/store/workflowStore';
 import { useEffect } from 'react';
-import { ShieldAlert, Cpu, Activity, Play } from 'lucide-react';
+import { Command, Cpu, Play, Activity, ShieldAlert } from 'lucide-react';
 
 export default function Header() {
   const pathname = usePathname();
@@ -16,52 +16,89 @@ export default function Header() {
   }, [loadPausedExecutionsFromSession]);
 
   const navItems = [
-    { label: 'Home', path: '/', icon: <Cpu className="w-4 h-4" /> },
-    { label: 'Simulation', path: '/simulation', icon: <Play className="w-4 h-4" /> },
-    { label: 'Live Workflow', path: '/workflow', icon: <Activity className="w-4 h-4" /> },
-    { 
-      label: 'Human Review', 
-      path: '/review', 
-      icon: <ShieldAlert className="w-4 h-4" />,
-      badge: pendingCount > 0 ? pendingCount : null
-    },
+    { label: 'Home', path: '/', icon: Cpu },
+    { label: 'Simulation', path: '/simulation', icon: Play },
+    { label: 'Live Workflow', path: '/workflow', icon: Activity },
+    { label: 'Human Review', path: '/review', icon: ShieldAlert, badge: pendingCount },
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full px-6 py-4 flex justify-between items-center bg-[#030303]/40 backdrop-blur-md border-b border-white/5">
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary to-primary-light flex items-center justify-center shadow-lg shadow-primary/20">
-          <Cpu className="w-5 h-5 text-black stroke-[2.5]" />
+    <header
+      className="sticky top-0 z-50 w-full flex items-center justify-between gap-4 border-b"
+      style={{
+        padding: '14px clamp(16px, 4vw, 40px)',
+        background: 'color-mix(in oklab, var(--ink-900) 62%, transparent)',
+        backdropFilter: 'blur(18px) saturate(1.2)',
+        WebkitBackdropFilter: 'blur(18px) saturate(1.2)',
+        borderColor: 'var(--line)',
+      }}
+    >
+      {/* Logo */}
+      <Link href="/" className="focus-ring flex items-center gap-3" style={{ borderRadius: 10 }}>
+        <div
+          className="grid place-items-center"
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 10,
+            background: 'linear-gradient(145deg, var(--accent-bright), var(--accent-deep))',
+            boxShadow: '0 6px 18px -6px rgba(var(--accent-rgb), .7), inset 0 1px 0 rgba(255,255,255,.35)',
+          }}
+        >
+          <Command className="w-[18px] h-[18px]" strokeWidth={2.2} style={{ color: 'var(--accent-ink)' }} />
         </div>
-        <div>
-          <span className="font-sans font-bold text-lg tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-primary-light">
+        <div className="leading-none">
+          <div className="font-semibold text-[17px]" style={{ letterSpacing: '.06em', color: 'var(--fg)' }}>
             AGENTIA
-          </span>
-          <span className="font-mono text-[9px] block text-primary font-bold tracking-[0.2em] -mt-1">
+          </div>
+          <div
+            className="font-mono font-semibold mt-0.5"
+            style={{ fontSize: 8.5, letterSpacing: '.26em', color: 'var(--accent-bright)' }}
+          >
             WORKFLOW ENGINE
-          </span>
+          </div>
         </div>
-      </div>
+      </Link>
 
-      <nav className="flex items-center gap-1.5 p-1 rounded-full border border-white/5 bg-charcoal/30 backdrop-blur-xl">
+      {/* Pill-group nav */}
+      <nav
+        className="flex items-center gap-1 rounded-full border"
+        style={{
+          padding: 5,
+          borderColor: 'var(--line)',
+          background: 'color-mix(in oklab, var(--ink-800) 60%, transparent)',
+        }}
+      >
         {navItems.map((item) => {
           const isActive = pathname === item.path;
+          const Icon = item.icon;
           return (
             <Link
               key={item.path}
               href={item.path}
-              className={`relative px-4 py-2 text-xs font-medium rounded-full transition-all duration-300 flex items-center gap-2 ${
-                isActive
-                  ? 'text-white bg-white/5 shadow-inner border border-white/10'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
+              className="focus-ring relative inline-flex items-center gap-2 rounded-full border text-[13px] font-medium transition-all duration-300"
+              style={{
+                padding: '9px 15px',
+                color: isActive ? 'var(--fg)' : 'var(--fg-dim)',
+                background: isActive ? 'rgba(255,255,255,.06)' : 'transparent',
+                borderColor: isActive ? 'var(--line-2)' : 'transparent',
+              }}
             >
-              {item.icon}
-              <span>{item.label}</span>
-              {item.badge !== null && (
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              <Icon
+                className="w-[15px] h-[15px]"
+                style={{ color: isActive ? 'var(--accent-bright)' : 'inherit' }}
+              />
+              <span className="nav-label">{item.label}</span>
+              {item.badge !== undefined && item.badge > 0 && (
+                <span className="relative inline-flex" style={{ width: 7, height: 7 }}>
+                  <span
+                    className="ping absolute inset-0 rounded-full"
+                    style={{ color: 'var(--warn)' }}
+                  />
+                  <span
+                    className="relative rounded-full"
+                    style={{ width: 7, height: 7, background: 'var(--warn)' }}
+                  />
                 </span>
               )}
             </Link>
@@ -69,9 +106,23 @@ export default function Header() {
         })}
       </nav>
 
-      <div className="flex items-center gap-3">
-        <span className="text-[10px] font-mono text-gray-500 bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
-          V1.0.0 // LOCALHOST
+      {/* Status pill */}
+      <div className="header-meta flex items-center gap-2.5">
+        <span
+          className="inline-flex items-center gap-1.5 font-mono font-semibold uppercase rounded-full border"
+          style={{
+            fontSize: 10,
+            letterSpacing: '.12em',
+            padding: '4px 10px',
+            borderColor: 'var(--line-2)',
+            color: 'var(--fg-dim)',
+          }}
+        >
+          <span
+            className="rounded-full"
+            style={{ width: 6, height: 6, background: 'var(--ok)', boxShadow: '0 0 8px var(--ok)' }}
+          />
+          v2.0 · LIVE
         </span>
       </div>
     </header>

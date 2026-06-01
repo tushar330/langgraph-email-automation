@@ -5,94 +5,76 @@ import { useWorkflowStore } from '@/store/workflowStore';
 import WorkflowGraph from '@/components/workflow/WorkflowGraph';
 import LogsTimeline from '@/components/workflow/LogsTimeline';
 import MetricsPanel from '@/components/dashboard/MetricsPanel';
-import { Activity, ShieldAlert, Cpu } from 'lucide-react';
+import { Activity, ShieldAlert, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { PageShell, PageHeader } from '@/lib/uiHooks';
+
+const LEGEND = [
+  { label: 'Completed', color: 'var(--ok)' },
+  { label: 'Running', color: 'var(--accent)' },
+  { label: 'Pending', color: 'var(--fg-faint)' },
+];
 
 export default function LiveWorkflowPage() {
   const { currentExecution, isExecuting } = useWorkflowStore();
+  const needsReview = currentExecution?.workflow_status === 'needs_review';
 
   return (
-    <div className="flex-1 w-full max-w-7xl mx-auto px-6 py-6 flex flex-col gap-6 relative z-10">
-      
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-5">
-        <div>
-          <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-primary animate-pulse" />
-            <span className="text-[10px] font-mono text-primary font-bold tracking-widest uppercase">
-              REAL-TIME ORCHESTRATION ENGINE
-            </span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white mt-1">
-            System Observability Console
-          </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Visual execution trace of the active LangGraph email automation workflow. Select node cards to review model outputs.
-          </p>
-        </div>
+    <PageShell>
+      <PageHeader
+        kickerIcon={Activity}
+        kicker="Real-time orchestration engine"
+        title="System Observability Console"
+        sub="Visual execution trace of the active LangGraph email automation workflow. Inspect node cards and live transition logs."
+        right={
+          needsReview ? (
+            <Link
+              href="/review"
+              className="focus-ring"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 'var(--r-sm)', background: 'color-mix(in oklab, var(--warn) 12%, transparent)', border: '1px solid color-mix(in oklab, var(--warn) 32%, transparent)', color: 'var(--warn)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', animation: 'a-pulse 1.8s infinite' }}
+            >
+              <ShieldAlert className="w-4 h-4" />
+              <span>Paused · review draft</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          ) : undefined
+        }
+      />
 
-        {/* Quick Review Navigation Badge */}
-        {currentExecution?.workflow_status === 'needs_review' && (
-          <Link 
-            href="/review"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/25 text-xs text-orange-400 font-bold hover:bg-orange-500/20 transition-all glow-orange animate-pulse"
-          >
-            <ShieldAlert className="w-4 h-4 shrink-0" />
-            <span>Workflow Paused: Review Reply Draft</span>
-          </Link>
-        )}
-      </div>
+      {/* Metrics */}
+      {currentExecution && <MetricsPanel />}
 
-      {/* Metrics Row */}
-      {currentExecution && (
-        <div className="shrink-0">
-          <MetricsPanel />
-        </div>
-      )}
-
-      {/* Main Flow Canvas & Logs Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 flex-1 min-h-[500px]">
-        
-        {/* React Flow Board */}
-        <div className="flex flex-col border border-white/5 rounded-2xl bg-charcoal/30 overflow-hidden relative glass-panel min-h-[480px]">
-          {/* Header toolbar */}
-          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between bg-white/5 shrink-0">
-            <div className="flex items-center gap-2.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-primary/20 flex items-center justify-center">
-                <span className={`w-1.5 h-1.5 rounded-full bg-primary ${isExecuting ? 'animate-ping' : ''}`} />
-              </div>
-              <span className="text-xs font-semibold tracking-wider text-white">REACT-FLOW SCHEMATIC CANVAS</span>
+      {/* Canvas + logs */}
+      <div className="wf-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,360px)', gap: 20, flex: 1, minHeight: 500 }}>
+        {/* Graph panel */}
+        <div className="panel" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 480 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid var(--line)', background: 'rgba(255,255,255,.02)', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+              <span style={{ position: 'relative', display: 'inline-flex', width: 8, height: 8 }}>
+                {isExecuting && <span className="ping" style={{ position: 'absolute', inset: 0, color: 'var(--accent)', borderRadius: 99 }} />}
+                <span style={{ position: 'relative', width: 8, height: 8, borderRadius: 99, background: 'var(--accent)' }} />
+              </span>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>React-Flow Schematic Canvas</span>
             </div>
-            
-            <div className="flex items-center gap-4 text-[9px] font-mono text-gray-500">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-green-500/20 border border-green-500/50" />
-                <span>COMPLETED</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-primary/20 border border-primary/50" />
-                <span>RUNNING</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-white/5 border border-white/10" />
-                <span>PENDING</span>
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              {LEGEND.map((l) => (
+                <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--fg-faint)' }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 99, background: `color-mix(in oklab, ${l.color} 28%, transparent)`, border: `1px solid ${l.color}` }} />
+                  <span>{l.label}</span>
+                </div>
+              ))}
             </div>
           </div>
-
-          {/* Interactive Canvas container */}
-          <div className="flex-1 min-h-0 relative">
+          <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
             <WorkflowGraph />
           </div>
         </div>
 
-        {/* System Logs Timeline */}
-        <div className="h-[400px] lg:h-auto shrink-0 lg:shrink flex flex-col">
+        {/* Logs */}
+        <div style={{ minHeight: 480, display: 'flex', flexDirection: 'column' }}>
           <LogsTimeline />
         </div>
-
       </div>
-
-    </div>
+    </PageShell>
   );
 }

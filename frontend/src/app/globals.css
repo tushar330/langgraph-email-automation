@@ -1,98 +1,319 @@
 @import "tailwindcss";
 
+/* ============================================================
+   AGENTIA v2 — "Iris" design system · Azure accent
+   Cool deep-ink canvas · luminous azure accent
+   Tokens mirrored from design_handoff/prototype/styles.css
+   ============================================================ */
+
+:root {
+  /* --- Canvas / surfaces (cool blue-violet ink) --- */
+  --ink-900: #07080d;   /* page base */
+  --ink-850: #0a0c13;   /* sunk */
+  --ink-800: #0e111a;   /* surface */
+  --ink-750: #131724;   /* raised card */
+  --ink-700: #1a1f30;   /* hover */
+  --ink-650: #222840;   /* active */
+
+  /* --- Hairlines --- */
+  --line:        rgba(255,255,255,0.07);
+  --line-2:      rgba(255,255,255,0.11);
+  --line-strong: rgba(255,255,255,0.18);
+
+  /* --- Text --- */
+  --fg:       #eef0f6;
+  --fg-dim:   #a7adbe;
+  --fg-faint: #6b7287;
+  --fg-ghost: #444b5e;
+
+  /* --- Signature accent = AZURE (hue 248 / rgb 96,135,255) --- */
+  --accent:        oklch(0.70 0.17 248);
+  --accent-bright: oklch(0.82 0.15 248);
+  --accent-deep:   oklch(0.58 0.17 248);
+  --accent-rgb:    96, 135, 255;
+  --accent-soft:   color-mix(in oklab, var(--accent) 14%, transparent);
+  --accent-line:   color-mix(in oklab, var(--accent) 38%, transparent);
+  --accent-ink:    #0a0712;
+
+  /* --- Semantic (reserved for status / confidence — never re-themed) --- */
+  --ok:    oklch(0.80 0.15 152);
+  --ok-rgb: 61, 220, 151;
+  --warn:  oklch(0.83 0.13 80);
+  --warn-rgb: 245, 193, 78;
+  --bad:   oklch(0.67 0.20 23);
+  --bad-rgb: 255, 107, 107;
+  --info:  oklch(0.74 0.13 235);
+
+  /* --- Radii --- */
+  --r-xs: 8px;
+  --r-sm: 11px;
+  --r:    15px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+
+  /* --- Elevation --- */
+  --e1: 0 1px 2px rgba(0,0,0,.4);
+  --e2: 0 8px 24px -8px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4);
+  --e3: 0 30px 60px -20px rgba(0,0,0,.7), 0 8px 24px -10px rgba(0,0,0,.5);
+  --glow: 0 0 40px -6px rgba(var(--accent-rgb), .35);
+
+  /* --- Motion --- */
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --ease-soft: cubic-bezier(.4, .14, .2, 1);
+}
+
+/* ============================================================
+   Tailwind theme — expose tokens as utilities.
+   Legacy names (primary/charcoal/background/dark-gray) are
+   remapped onto the new palette so not-yet-ported screens
+   stay visually coherent during the screen-by-screen port.
+   ============================================================ */
 @theme {
-  --color-background: #030303;
-  --color-foreground: #f5f5f5;
-  
-  --color-primary: #ff6b00;
-  --color-primary-dark: #cc5200;
-  --color-primary-light: #ff8533;
-  
-  --color-dark-gray: #0b0b0b;
-  --color-charcoal: #121212;
-  --color-border-subtle: rgba(255, 255, 255, 0.08);
-  --color-border-glow: rgba(255, 107, 0, 0.3);
+  /* canvas */
+  --color-background: #07080d;
+  --color-foreground: #eef0f6;
 
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --color-ink-900: #07080d;
+  --color-ink-850: #0a0c13;
+  --color-ink-800: #0e111a;
+  --color-ink-750: #131724;
+  --color-ink-700: #1a1f30;
+  --color-ink-650: #222840;
+
+  /* accent (Azure) — also remaps legacy "primary" family */
+  --color-accent: oklch(0.70 0.17 248);
+  --color-accent-bright: oklch(0.82 0.15 248);
+  --color-accent-deep: oklch(0.58 0.17 248);
+  --color-accent-ink: #0a0712;
+
+  --color-primary: oklch(0.70 0.17 248);
+  --color-primary-dark: oklch(0.58 0.17 248);
+  --color-primary-light: oklch(0.82 0.15 248);
+
+  /* semantic status colors */
+  --color-ok: oklch(0.80 0.15 152);
+  --color-warn: oklch(0.83 0.13 80);
+  --color-bad: oklch(0.67 0.20 23);
+  --color-info: oklch(0.74 0.13 235);
+
+  /* legacy surface aliases → new ink palette */
+  --color-dark-gray: #0a0c13;
+  --color-charcoal: #0e111a;
+  --color-border-subtle: rgba(255, 255, 255, 0.07);
+  --color-border-glow: rgba(96, 135, 255, 0.3);
+
+  /* text helpers */
+  --color-fg-dim: #a7adbe;
+  --color-fg-faint: #6b7287;
+  --color-fg-ghost: #444b5e;
+
+  --font-sans: 'General Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 }
 
-/* Custom Scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #030303;
-}
-::-webkit-scrollbar-thumb {
-  background: #222;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #333;
-}
-
+/* ============================================================
+   Base
+   ============================================================ */
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body {
-  background-color: #030303;
-  color: #f5f5f5;
+  font-family: var(--font-sans);
+  background-color: var(--ink-900);
+  color: var(--fg);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   overflow-x: hidden;
 }
+h1, h2, h3, h4 { letter-spacing: -0.025em; line-height: 1.06; }
 
-/* Custom glassmorphism & glows */
+/* ============================================================
+   Custom Scrollbars
+   ============================================================ */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--ink-700);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--ink-650); background-clip: padding-box; }
+
+/* ============================================================
+   Atmospheric background — fixed cool gradient + faint grid
+   ============================================================ */
+.bg-atmosphere {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 50% -10%, color-mix(in oklab, var(--accent) 9%, transparent), transparent 60%),
+    radial-gradient(80% 60% at 100% 100%, color-mix(in oklab, var(--info) 5%, transparent), transparent 55%),
+    var(--ink-900);
+}
+.bg-grid {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,.022) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.022) 1px, transparent 1px);
+  background-size: 58px 58px;
+  -webkit-mask-image: radial-gradient(ellipse 75% 60% at 50% 0%, #000 55%, transparent 100%);
+          mask-image: radial-gradient(ellipse 75% 60% at 50% 0%, #000 55%, transparent 100%);
+}
+
+/* ============================================================
+   Reusable surfaces
+   ============================================================ */
+.glass {
+  background: color-mix(in oklab, var(--ink-800) 78%, transparent);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border: 1px solid var(--line);
+}
+.panel {
+  background: color-mix(in oklab, var(--ink-800) 85%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+/* legacy alias kept so existing markup keeps working, restyled */
 .glass-panel {
-  background: rgba(11, 11, 11, 0.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: color-mix(in oklab, var(--ink-800) 82%, transparent);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid var(--line);
 }
-
 .glass-panel-glow {
-  background: rgba(11, 11, 11, 0.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 107, 0, 0.2);
-  box-shadow: 0 0 25px rgba(255, 107, 0, 0.06);
+  background: color-mix(in oklab, var(--ink-800) 82%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--accent-line);
+  box-shadow: var(--glow);
 }
 
-.glow-orange {
-  box-shadow: 0 0 30px rgba(255, 107, 0, 0.15);
+/* status glows — re-pointed to semantic tokens */
+.glow-accent { box-shadow: var(--glow); }
+.glow-orange { box-shadow: 0 0 30px -4px rgba(var(--warn-rgb), .22); }
+.glow-green  { box-shadow: 0 0 30px -4px rgba(var(--ok-rgb), .22); }
+.glow-red    { box-shadow: 0 0 30px -4px rgba(var(--bad-rgb), .22); }
+
+/* ============================================================
+   Buttons (ported from prototype .btn / .btn-primary / .btn-ghost)
+   ============================================================ */
+.btn-iris-primary,
+.btn-iris-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  font-family: var(--font-sans); font-weight: 600; font-size: 13px; letter-spacing: .02em;
+  padding: 13px 22px; border-radius: var(--r); border: 1px solid transparent;
+  transition: transform .35s var(--ease), box-shadow .35s var(--ease),
+              background .25s var(--ease), border-color .25s var(--ease), color .2s;
+  will-change: transform;
+}
+.btn-iris-primary {
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent));
+  color: var(--accent-ink);
+  box-shadow: 0 8px 22px -8px rgba(var(--accent-rgb), .6), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-iris-primary:hover { box-shadow: 0 14px 34px -8px rgba(var(--accent-rgb), .75), inset 0 1px 0 rgba(255,255,255,.3); transform: translateY(-2px); }
+.btn-iris-primary:active { transform: translateY(0) scale(.98); }
+.btn-iris-ghost {
+  background: rgba(255,255,255,.04); border-color: var(--line-2); color: var(--fg);
+}
+.btn-iris-ghost:hover { background: rgba(255,255,255,.08); border-color: var(--line-strong); transform: translateY(-2px); }
+.btn-iris-ghost:active { transform: translateY(0) scale(.98); }
+
+/* tech-stack card hover lift */
+.tech-card { transition: transform .35s var(--ease), border-color .3s var(--ease); }
+.tech-card:hover { transform: translateY(-4px); border-color: var(--accent-line) !important; }
+
+/* footer resource link */
+.footer-link { transition: color .2s var(--ease); }
+.footer-link:hover { color: var(--fg) !important; }
+
+/* mono micro-label (kicker) */
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--accent-bright);
 }
 
-.glow-green {
-  box-shadow: 0 0 30px rgba(34, 197, 94, 0.15);
+/* ============================================================
+   Motion utilities
+   ============================================================ */
+@keyframes a-rise   { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+@keyframes a-fade   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes a-pop    { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+@keyframes a-pulse  { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+@keyframes a-ping   { 75%,100% { transform: scale(2.4); opacity: 0; } }
+@keyframes a-spin   { to { transform: rotate(360deg); } }
+@keyframes a-drift  { 0% { transform: translate(0,0); } 50% { transform: translate(24px,-30px); } 100% { transform: translate(0,0); } }
+@keyframes a-drift2 { 0% { transform: translate(0,0); } 50% { transform: translate(-30px,24px); } 100% { transform: translate(0,0); } }
+@keyframes a-sheen  { 0% { background-position: -150% 0; } 100% { background-position: 250% 0; } }
+@keyframes a-flow   { to { stroke-dashoffset: -28; } }
+
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity .8s var(--ease), transform .8s var(--ease); }
+.reveal.in { opacity: 1; transform: none; }
+.spin { animation: a-spin 1s linear infinite; }
+
+/* ping dot (expanding ring) */
+.ping { position: relative; display: inline-flex; }
+.ping::before {
+  content: ""; position: absolute; inset: 0; border-radius: 99px;
+  background: currentColor; animation: a-ping 1.6s var(--ease-soft) infinite;
 }
 
-.glow-red {
-  box-shadow: 0 0 30px rgba(239, 68, 68, 0.15);
+/* skeleton shimmer */
+.skel {
+  background: linear-gradient(90deg, rgba(255,255,255,.03) 25%, rgba(255,255,255,.08) 50%, rgba(255,255,255,.03) 75%);
+  background-size: 200% 100%;
+  animation: a-sheen 1.4s linear infinite;
+  border-radius: 6px;
 }
 
-/* React Flow custom styles */
-.react-flow__renderer {
-  background: #030303 !important;
-}
+.tilt { transform-style: preserve-3d; transition: transform .4s var(--ease); }
+.focus-ring:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ============================================================
+   React Flow — restyled (status contract preserved)
+   ============================================================ */
+.react-flow__renderer { background: transparent !important; }
 
 .react-flow__edge-path {
-  stroke: rgba(255, 255, 255, 0.15);
+  stroke: var(--line-strong);
+  stroke-width: 1.6px;
+}
+.react-flow__edge.active .react-flow__edge-path {
+  stroke: var(--accent) !important;
+  stroke-width: 2.4px;
+  stroke-dasharray: 6 6;
+  animation: a-flow 0.6s linear infinite;
+}
+.react-flow__edge.completed .react-flow__edge-path {
+  stroke: var(--ok) !important;
   stroke-width: 2px;
 }
 
-.react-flow__edge.active .react-flow__edge-path {
-  stroke: #ff6b00 !important;
-  stroke-width: 3px;
-  stroke-dasharray: 5;
-  animation: dash 1s linear infinite;
+/* ============================================================
+   Responsive helpers (mirrored from prototype styles.css)
+   ============================================================ */
+@media (max-width: 1080px) {
+  .nav-label { display: none; }
+}
+@media (max-width: 760px) {
+  .header-meta { display: none; }
 }
 
-.react-flow__edge.completed .react-flow__edge-path {
-  stroke: #22c55e !important;
-  stroke-width: 2.5px;
-}
-
-@keyframes dash {
-  from {
-    stroke-dashoffset: 10;
+/* ============================================================
+   Reduced motion
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
   }
-  to {
-    stroke-dashoffset: 0;
-  }
+  .reveal { opacity: 1 !important; transform: none !important; }
 }

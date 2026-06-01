@@ -282,8 +282,8 @@ export default function WorkflowGraph() {
         zoomOnDoubleClick={false}
         preventScrolling={true}
       >
-        <Background color="#222" gap={20} size={1} />
-        <Controls className="!bg-charcoal !border-white/5 !text-white" />
+        <Background color="rgba(255,255,255,0.06)" gap={22} size={1} />
+        <Controls className="!bg-[var(--ink-800)] !border-[var(--line)] !text-[var(--fg-dim)]" />
       </ReactFlow>
     </div>
   );

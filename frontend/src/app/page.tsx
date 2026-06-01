@@ -2,461 +2,313 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { 
-  ArrowRight, Cpu, Shield, Database, Send, CheckCircle2, Play, Activity, 
-  Terminal, BarChart3, Settings, ExternalLink, Mail, Zap, HelpCircle
+import {
+  Command, Cpu, Database, ShieldCheck, Send, Play, Activity, Terminal, Tag,
+  Gauge, PenTool, UserCheck, Inbox, ArrowRight, ExternalLink,
 } from 'lucide-react';
+import {
+  useReveal, useTilt, useCountUp, usePointerParallax, Chip, SectionHead,
+} from '@/lib/uiHooks';
+
+/* ---- content ---- */
+const FEATURES = [
+  { icon: Cpu, title: 'LangGraph Orchestration', desc: 'Explicit state management with stateful loops, rewrite thresholds, and pause-and-resume gates.' },
+  { icon: Database, title: 'Context RAG Retrieval', desc: 'Vector search over ChromaDB injects live company documentation straight into writer prompts.' },
+  { icon: ShieldCheck, title: 'Human Review Loop', desc: 'Low-confidence drafts pause execution and cache graph state for operators to edit and dispatch.' },
+  { icon: Gauge, title: 'Confidence Gates', desc: 'Dual evaluation: the classifier scores intent, a proofreader scores response accuracy and tone.' },
+  { icon: Terminal, title: 'Full Execution History', desc: 'Every node emits a structured audit log so you can see exactly why an agent chose a path.' },
+  { icon: Play, title: 'Interactive Simulation', desc: 'A sandbox of pre-built customer emails — enquiry, refund, support, anger, spam — to test live.' },
+];
+
+const STAGES = [
+  { title: 'Inbound Ingest', desc: 'Email arrives via Gmail API and loads into the engine state.', icon: Inbox },
+  { title: 'AI Classification', desc: 'Llama 3.3 identifies intent: enquiry, refund, support, feedback, or unrelated.', icon: Tag },
+  { title: 'Semantic RAG Search', desc: 'ChromaDB matches the enquiry against the local agency knowledge base.', icon: Database },
+  { title: 'AI Reply Drafting', desc: 'A context-aware response is synthesized from category and retrieved chunks.', icon: PenTool },
+  { title: 'Compliance Audit', desc: 'A second agent evaluates tone, accuracy, and a draft confidence score.', icon: ShieldCheck },
+  { title: 'Human Review Gate', desc: 'Low confidence or forced runs pause and wait for an operator decision.', icon: UserCheck },
+  { title: 'Gmail Delivery', desc: 'The approved reply is dispatched and thread state synced back to Gmail.', icon: Send },
+];
+
+const TECH = [
+  { name: 'FastAPI', cat: 'Backend Host', desc: 'Low-latency Python API surface' },
+  { name: 'LangGraph', cat: 'Orchestration', desc: 'Cyclic stateful agent graph' },
+  { name: 'ChromaDB', cat: 'Vector Store', desc: 'Semantic retrieval engine' },
+  { name: 'Gemini', cat: 'Embeddings', desc: 'gemini-embedding-001 vectors' },
+  { name: 'Groq', cat: 'Inference', desc: 'Llama-3.3 at high throughput' },
+  { name: 'React Flow', cat: 'Visualizer', desc: 'Live node + edge topology' },
+  { name: 'Next.js', cat: 'Application', desc: 'App Router front end' },
+];
+
+/* ---- floating node card in hero preview ---- */
+function FloatCard({ top, left, right, icon: Icon, color, title, sub, delay }: { top: number; left?: number; right?: number; icon: React.ElementType; color: string; title: string; sub: string; delay: string }) {
+  return (
+    <div className="reveal" style={{ position: 'absolute', top, left, right, width: 196, transitionDelay: delay, animation: 'a-drift 9s ease-in-out infinite', animationDelay: delay }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 'var(--r-sm)', border: `1px solid color-mix(in oklab, ${color} 30%, transparent)`, background: 'color-mix(in oklab, var(--ink-750) 92%, transparent)', boxShadow: 'var(--e2)' }}>
+        <div style={{ width: 28, height: 28, borderRadius: 7, display: 'grid', placeItems: 'center', background: `color-mix(in oklab, ${color} 14%, transparent)`, color }}>
+          <Icon className="w-3.5 h-3.5" />
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--fg-faint)' }}>{sub}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HeroPreview() {
+  const tilt = useTilt(7);
+  const conf = useCountUp(62, { duration: 1600 });
+  return (
+    <div className="reveal" style={{ perspective: 1000, transitionDelay: '.15s' }}>
+      <div ref={tilt.ref} onMouseMove={tilt.onMouseMove} onMouseLeave={tilt.onMouseLeave} className="tilt"
+        style={{ position: 'relative', borderRadius: 'var(--r-xl)', overflow: 'hidden', background: 'color-mix(in oklab, var(--ink-800) 80%, transparent)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--line-2)', boxShadow: 'var(--e3), var(--glow)', height: 430 }}>
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 4, background: 'radial-gradient(420px circle at var(--mx,50%) var(--my,30%), rgba(255,255,255,.06), transparent 50%)' }} />
+        {/* window header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderBottom: '1px solid var(--line)', background: 'rgba(255,255,255,.03)' }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {['var(--bad)', 'var(--warn)', 'var(--ok)'].map((c, i) => (
+              <span key={i} style={{ width: 10, height: 10, borderRadius: 99, background: `color-mix(in oklab, ${c} 55%, transparent)` }} />
+            ))}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', color: 'var(--fg-faint)' }}>
+            <Terminal className="w-3 h-3" style={{ color: 'var(--accent-bright)' }} />
+            STATE_ORCHESTRATOR
+          </div>
+          <span style={{ position: 'relative', display: 'inline-flex', width: 9, height: 9 }}>
+            <span className="ping" style={{ position: 'absolute', inset: 0, color: 'var(--ok)', borderRadius: 99 }} />
+            <span style={{ position: 'relative', width: 9, height: 9, borderRadius: 99, background: 'var(--ok)' }} />
+          </span>
+        </div>
+        {/* canvas */}
+        <div style={{ position: 'relative', height: 'calc(100% - 47px)' }}>
+          <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0 }} preserveAspectRatio="none" viewBox="0 0 420 380">
+            <path d="M 120 70 C 200 70, 220 120, 300 130" fill="none" stroke="var(--accent-line)" strokeWidth="1.5" strokeDasharray="5 5" style={{ animation: 'a-flow 1s linear infinite' }} />
+            <path d="M 300 160 C 240 200, 180 200, 130 250" fill="none" stroke="var(--accent-line)" strokeWidth="1.5" strokeDasharray="5 5" style={{ animation: 'a-flow 1.3s linear infinite' }} />
+            <path d="M 130 290 C 200 320, 250 320, 300 330" fill="none" stroke="rgba(255,255,255,.1)" strokeWidth="1.5" />
+          </svg>
+          <FloatCard top={26} left={20} icon={Inbox} color="var(--ok)" title="Inbox Loaded" sub="1 message detected" delay=".3s" />
+          <FloatCard top={92} right={20} icon={Tag} color="var(--accent)" title="AI Classifier" sub="confidence · 96%" delay=".5s" />
+          <FloatCard top={186} left={26} icon={Database} color="var(--fg-dim)" title="Chroma RAG Search" sub="retrieving context…" delay=".7s" />
+          {/* review card */}
+          <div className="reveal" style={{ position: 'absolute', bottom: 18, right: 18, width: 224, transitionDelay: '.9s' }}>
+            <div style={{ borderRadius: 'var(--r)', border: '1px solid var(--warn)', padding: 12, background: 'color-mix(in oklab, var(--warn) 8%, var(--ink-850))', boxShadow: '0 0 24px -6px color-mix(in oklab, var(--warn) 50%, transparent)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 30, height: 30, borderRadius: 8, display: 'grid', placeItems: 'center', background: 'color-mix(in oklab, var(--warn) 16%, transparent)', color: 'var(--warn)' }}>
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600 }}>Review Required</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--warn)' }}>confidence · {conf}%</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 7, marginTop: 11, paddingTop: 11, borderTop: '1px solid var(--line)' }}>
+                <span style={{ flex: 1, textAlign: 'center', padding: '6px 0', borderRadius: 7, fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--bad)', background: 'color-mix(in oklab, var(--bad) 10%, transparent)', border: '1px solid color-mix(in oklab, var(--bad) 22%, transparent)' }}>Discard</span>
+                <span style={{ flex: 1, textAlign: 'center', padding: '6px 0', borderRadius: 7, fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-ink)', background: 'var(--accent)' }}>Approve</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---- word-by-word rising headline (pure: delay derived from index) ---- */
+function Word({ children, accent, order }: { children: React.ReactNode; accent?: boolean; order: number }) {
+  const d = (order * 0.07 + 0.1).toFixed(2);
+  return (
+    <span style={{ display: 'inline-block', overflow: 'hidden', verticalAlign: 'top', paddingRight: '0.28em' }}>
+      <span style={{ display: 'inline-block', animation: 'a-rise .8s var(--ease) both', animationDelay: `${d}s`, color: accent ? 'transparent' : 'inherit', background: accent ? 'linear-gradient(100deg, var(--accent-bright), var(--accent) 55%, var(--fg))' : 'none', WebkitBackgroundClip: accent ? 'text' : 'initial', backgroundClip: accent ? 'text' : 'initial' }}>{children}</span>
+    </span>
+  );
+}
+
+function Headline() {
+  const line1 = ['Visualize', 'autonomous'];
+  const line2 = ['AI', 'email', 'workflows'];
+  return (
+    <h1 style={{ fontSize: 'clamp(34px, 5.4vw, 66px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1.04 }}>
+      <div>{line1.map((w, k) => <Word key={k} order={k}>{w}</Word>)}</div>
+      <div>{line2.map((w, k) => <Word key={k} order={line1.length + k} accent>{w}</Word>)}</div>
+    </h1>
+  );
+}
+
+/* ---- feature card (tilt + spotlight) ---- */
+function FeatureCard({ f, i }: { f: typeof FEATURES[number]; i: number }) {
+  const tilt = useTilt(6);
+  const Icon = f.icon;
+  return (
+    <div className="reveal" style={{ transitionDelay: `${i * 0.06}s`, perspective: 800 }}>
+      <div ref={tilt.ref} onMouseMove={tilt.onMouseMove} onMouseLeave={tilt.onMouseLeave} className="tilt"
+        style={{ padding: 22, height: '100%', position: 'relative', overflow: 'hidden', cursor: 'default', background: 'var(--ink-800)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)' }}>
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(300px circle at var(--mx,50%) var(--my,50%), color-mix(in oklab, var(--accent) 9%, transparent), transparent 60%)', opacity: 0.9 }} />
+        <div style={{ position: 'relative' }}>
+          <div style={{ width: 42, height: 42, borderRadius: 11, display: 'grid', placeItems: 'center', background: 'color-mix(in oklab, var(--accent) 12%, transparent)', border: '1px solid var(--accent-line)', color: 'var(--accent-bright)', marginBottom: 16 }}>
+            <Icon className="w-5 h-5" />
+          </div>
+          <h3 style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.01em' }}>{f.title}</h3>
+          <p style={{ marginTop: 8, fontSize: 13.5, lineHeight: 1.6, color: 'var(--fg-dim)' }}>{f.desc}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---- interactive workflow stages ---- */
+function StagesShowcase() {
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setActive((a) => (a + 1) % STAGES.length), 3000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 4 }}>
+      <div style={{ position: 'absolute', left: 19, top: 18, bottom: 18, width: 1, background: 'var(--line-2)' }} />
+      {STAGES.map((s, idx) => {
+        const on = active === idx;
+        const Icon = s.icon;
+        return (
+          <button key={idx} onClick={() => setActive(idx)} className="focus-ring"
+            style={{ position: 'relative', textAlign: 'left', display: 'flex', gap: 16, padding: '14px 16px 14px 50px', borderRadius: 'var(--r)', border: `1px solid ${on ? 'var(--accent-line)' : 'transparent'}`, background: on ? 'color-mix(in oklab, var(--accent) 8%, transparent)' : 'transparent', transition: 'all .5s var(--ease)', cursor: 'pointer' }}>
+            <span style={{ position: 'absolute', left: 8, top: 13, width: 24, height: 24, borderRadius: 99, display: 'grid', placeItems: 'center', background: on ? 'var(--accent)' : 'var(--ink-750)', border: `1px solid ${on ? 'var(--accent)' : 'var(--line-2)'}`, color: on ? 'var(--accent-ink)' : 'var(--fg-faint)', transition: 'all .5s var(--ease)', transform: on ? 'scale(1.12)' : 'scale(1)', boxShadow: on ? '0 0 16px -2px var(--accent)' : 'none', zIndex: 2 }}>
+              <Icon className="w-3 h-3" />
+            </span>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: on ? 'var(--accent-bright)' : 'var(--fg)' }}>{s.title}</span>
+                {on && <Chip color="var(--accent-bright)" tone={0.12} style={{ fontSize: 8 }}>Active</Chip>}
+              </div>
+              <p style={{ marginTop: 4, fontSize: 12.5, lineHeight: 1.55, color: on ? 'var(--fg-dim)' : 'var(--fg-faint)' }}>{s.desc}</p>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function LandingPage() {
-  const [activeStep, setActiveStep] = useState(0);
-
-  // Workflow showcase steps for progressive animation loop
-  const steps = [
-    { title: 'Inbound Ingest', desc: 'Email arrives via Gmail API and is loaded into the engine state.', icon: Mail, color: 'text-blue-400' },
-    { title: 'AI Classification', desc: 'Llama 3.3 (via Groq) identifies intent: Product Enquiry, Refund, Support, Support, Support, etc.', icon: Cpu, color: 'text-purple-400' },
-    { title: 'Semantic RAG Search', desc: 'ChromaDB query matches enquiry against local agency knowledge base.', icon: Database, color: 'text-amber-400' },
-    { title: 'AI Reply Drafting', desc: 'Gemini 1.5 Flash drafts a context-aware response based on RAG results.', icon: Zap, color: 'text-pink-400' },
-    { title: 'Compliance Audit', desc: 'Secondary AI evaluates tone, spelling, and checks reply confidence score.', icon: CheckCircle2, color: 'text-emerald-400' },
-    { title: 'Human Review Gate', desc: 'Low confidence or forced runs trigger a pause, waiting for operator approval.', icon: Shield, color: 'text-orange-400' },
-    { title: 'Gmail Delivery', desc: 'Dispatches reply and links thread state back into Gmail thread.', icon: Send, color: 'text-green-400' }
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % steps.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [steps.length]);
+  const reveal = useReveal();
+  const par = usePointerParallax(20);
 
   return (
-    <div className="relative min-h-screen bg-background overflow-hidden font-sans text-foreground">
-      
-      {/* Background Orbs & Gradients */}
-      <div className="absolute inset-0 z-0">
-        {/* Top orange radial glow */}
-        <div className="absolute top-[-10%] left-[20%] w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px] pointer-events-none" />
-        {/* Bottom right radial glow */}
-        <div className="absolute bottom-[-10%] right-[10%] w-[500px] h-[500px] rounded-full bg-primary/5 blur-[100px] pointer-events-none" />
-        {/* Grid pattern overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
+    <div ref={reveal} style={{ position: 'relative', zIndex: 1 }}>
+      {/* floating orbs */}
+      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+        <div style={{ position: 'absolute', top: '-8%', left: '14%', width: 560, height: 560, borderRadius: '50%', background: 'radial-gradient(circle, color-mix(in oklab, var(--accent) 16%, transparent), transparent 65%)', filter: 'blur(40px)', transform: par(0.6), animation: 'a-drift 16s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', bottom: '6%', right: '8%', width: 480, height: 480, borderRadius: '50%', background: 'radial-gradient(circle, color-mix(in oklab, var(--info) 12%, transparent), transparent 65%)', filter: 'blur(40px)', transform: par(-0.4), animation: 'a-drift2 20s ease-in-out infinite' }} />
       </div>
 
-      {/* Hero Section */}
-      <section className="relative z-10 w-full max-w-7xl mx-auto px-6 pt-16 pb-24 md:pt-28 md:pb-36 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
-        
-        {/* Hero Left Content */}
-        <div className="space-y-8 text-left">
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 shadow-[0_0_15px_rgba(255,107,0,0.05)]"
-          >
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-[10px] font-mono text-primary font-bold tracking-widest uppercase">
-              INTERVIEW & PORTFOLIO SHOWCASE
-            </span>
-          </motion.div>
-
-          <div className="space-y-4">
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1]"
-            >
-              Visualize Autonomous <br />
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary-light to-white">
-                AI Email Workflows
-              </span>
-            </motion.h1>
-            
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-sm sm:text-base text-gray-400 max-w-xl leading-relaxed font-normal"
-            >
-              Experience an observable AI workflow orchestration engine. Built with LangGraph, Groq, 
-              and Gemini, featuring confidence gatekeeping, vector search (RAG), and real-time operator overrides.
-            </motion.p>
+      {/* HERO */}
+      <section className="hero-grid" style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: 'clamp(48px,7vw,104px) clamp(20px,4vw,40px) clamp(56px,7vw,120px)', display: 'grid', gridTemplateColumns: 'minmax(0,1.05fr) minmax(0,.95fr)', gap: 'clamp(28px,5vw,64px)', alignItems: 'center' }}>
+        <div>
+          <div className="reveal" style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '7px 14px', borderRadius: 99, border: '1px solid var(--accent-line)', background: 'color-mix(in oklab, var(--accent) 7%, transparent)', marginBottom: 28 }}>
+            <span style={{ width: 7, height: 7, borderRadius: 99, background: 'var(--accent)', boxShadow: '0 0 10px var(--accent)' }} />
+            <span className="kicker" style={{ fontSize: 10 }}>Observable agent orchestration</span>
           </div>
-
-          {/* Action CTAs */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-wrap gap-4"
-          >
-            <Link 
-              href="/simulation"
-              className="px-6 py-3.5 rounded-xl bg-primary hover:bg-primary-light text-black font-bold text-xs tracking-wider uppercase transition-all duration-300 flex items-center gap-2 shadow-lg shadow-primary/10 hover:shadow-primary/25 cursor-pointer active:scale-95"
-            >
-              <Play className="w-3.5 h-3.5 fill-black stroke-0" />
-              <span>Run Simulation</span>
-            </Link>
-            <Link 
-              href="/workflow"
-              className="px-6 py-3.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 text-white font-bold text-xs tracking-wider uppercase transition-all duration-300 flex items-center gap-2 cursor-pointer active:scale-95"
-            >
-              <Activity className="w-3.5 h-3.5 text-primary" />
-              <span>Explore Live Graph</span>
-            </Link>
-          </motion.div>
-        </div>
-
-        {/* Hero Right Preview Board (Interactive Mock Dashboard Card) */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
-          className="relative w-full h-[380px] sm:h-[420px] rounded-2xl border border-white/5 bg-[#0b0b0b]/60 backdrop-blur-xl shadow-2xl glass-panel flex flex-col overflow-hidden"
-        >
-          {/* Mock Window Top Header */}
-          <div className="px-4 py-3 border-b border-white/5 bg-white/5 flex items-center justify-between">
-            <div className="flex gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500/40" />
-              <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/40" />
-              <span className="w-2.5 h-2.5 rounded-full bg-green-500/40" />
-            </div>
-            <div className="text-[10px] font-mono text-gray-500 tracking-wider flex items-center gap-1.5">
-              <Terminal className="w-3.5 h-3.5 text-primary" />
-              <span>STATE_ORCHESTRATOR.LOGS</span>
-            </div>
-            <span className="w-3 h-3 rounded-full bg-green-500/20 flex items-center justify-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-ping" />
-            </span>
-          </div>
-
-          {/* Active Flow Mock Canvas */}
-          <div className="flex-1 p-5 relative overflow-hidden flex flex-col justify-between">
-            
-            {/* Floating workflow card 1: Ingest */}
-            <div className="absolute top-6 left-6 w-[200px] p-2.5 rounded-xl border border-green-500/30 bg-[#0a1810]/90 flex items-center gap-2.5 shadow-lg shadow-green-500/5">
-              <div className="p-1.5 rounded bg-green-500/10 text-green-400">
-                <Mail className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[10px] font-bold text-white truncate">Inbox Loaded</div>
-                <div className="text-[8px] text-gray-500 truncate">1 message detected</div>
-              </div>
-            </div>
-
-            {/* Glowing Flowing Connector lines (SVG overlay) */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-              {/* Path 1 -> Classify */}
-              <path d="M 120,60 L 250,110" fill="none" stroke="rgba(255,107,0,0.25)" strokeWidth="1.5" strokeDasharray="4" className="animate-[dash_8s_linear_infinite]" />
-              {/* Path 2 -> RAG */}
-              <path d="M 250,140 L 150,220" fill="none" stroke="rgba(255,107,0,0.25)" strokeWidth="1.5" strokeDasharray="4" />
-              {/* Path 3 -> Writer */}
-              <path d="M 150,250 L 250,330" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" />
-            </svg>
-
-            {/* Floating workflow card 2: AI Classification */}
-            <div className="absolute top-24 right-6 w-[200px] p-2.5 rounded-xl border border-primary/40 bg-[#1a1005]/90 flex items-center gap-2.5 shadow-lg shadow-primary/5">
-              <div className="p-1.5 rounded bg-primary/10 text-primary">
-                <Cpu className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[10px] font-bold text-white truncate">AI Classifier</div>
-                <div className="text-[8px] text-gray-400 font-mono">confidence: 96%</div>
-              </div>
-            </div>
-
-            {/* Floating workflow card 3: RAG */}
-            <div className="absolute top-48 left-8 w-[200px] p-2.5 rounded-xl border border-white/5 bg-charcoal/80 flex items-center gap-2.5">
-              <div className="p-1.5 rounded bg-white/5 text-gray-400">
-                <Database className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[10px] font-bold text-white truncate">Chroma RAG Search</div>
-                <div className="text-[8px] text-gray-500 truncate">Pending retrieval...</div>
-              </div>
-            </div>
-
-            {/* Floating workflow card 4: Output Review */}
-            <div className="absolute bottom-6 right-6 w-[220px] p-3 rounded-xl border border-orange-500/30 bg-[#1a1005]/95 shadow-[0_0_20px_rgba(255,107,0,0.08)] flex flex-col gap-2">
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded bg-orange-500/10 text-orange-400">
-                  <Shield className="w-3.5 h-3.5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-bold text-white">Review Required</div>
-                  <div className="text-[8px] text-orange-400 font-mono">confidence: 62%</div>
-                </div>
-              </div>
-              <div className="flex gap-1.5 pt-1.5 border-t border-white/5">
-                <button className="flex-1 py-1 rounded bg-red-500/10 border border-red-500/10 text-[8px] font-bold uppercase text-red-400">
-                  Discard
-                </button>
-                <button className="flex-1 py-1 rounded bg-primary text-black text-[8px] font-bold uppercase">
-                  Approve
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Features Section */}
-      <section className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20 border-t border-white/5 bg-[#030303]/30">
-        <div className="text-center space-y-4 mb-16">
-          <span className="text-[10px] font-mono text-primary font-bold tracking-widest uppercase">
-            ENGINE CAPABILITIES
-          </span>
-          <h2 className="text-3xl font-bold tracking-tight text-white">
-            Designed for Observability & Reliability
-          </h2>
-          <p className="text-xs text-gray-500 max-w-xl mx-auto">
-            Traditional AI pipelines run inside a black box. Our architecture opens the hood, providing visual clarity at each transition step.
+          <Headline />
+          <p className="reveal" style={{ marginTop: 22, maxWidth: 520, fontSize: 'clamp(15px,1.4vw,17px)', lineHeight: 1.65, color: 'var(--fg-dim)', transitionDelay: '.1s' }}>
+            An end-to-end engine that ingests, classifies, and answers customer email — built on LangGraph, Groq, and Gemini, with vector retrieval, confidence gatekeeping, and real-time human-in-the-loop overrides.
           </p>
-        </div>
-
-        {/* Feature Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            { 
-              title: 'LangGraph Orchestration', 
-              desc: 'Explicit state management and flexible routing allows stateful loops, rewrite feedback thresholds, and pause conditions.',
-              icon: Cpu,
-              border: 'group-hover:border-primary/20'
-            },
-            { 
-              title: 'Context RAG Retrieval', 
-              desc: 'Vector searches query ChromaDB, pulling up-to-date company documentation to feed context directly into writer prompts.',
-              icon: Database,
-              border: 'group-hover:border-amber-500/20'
-            },
-            { 
-              title: 'Human Review Loop', 
-              desc: 'Low-confidence answers pause execution, saving graph state statefully so operators can review, edit, and dispatch replies.',
-              icon: Shield,
-              border: 'group-hover:border-orange-500/20'
-            },
-            { 
-              title: 'Confidence Gates', 
-              desc: 'Double-evaluation mechanism. Llama scores intent confidence, and a proofreading prompt evaluates response syntax and accuracy.',
-              icon: BarChart3,
-              border: 'group-hover:border-green-500/20'
-            },
-            { 
-              title: 'Full Execution History', 
-              desc: 'Step-by-step audit logs output by every state node let you view exactly why an agent chose a specific path or rewrote a response.',
-              icon: Terminal,
-              border: 'group-hover:border-blue-500/20'
-            },
-            { 
-              title: 'Interactive Simulation', 
-              desc: 'Interviewer-friendly playground loaded with pre-configured customer emails covering product enquiry, spam, anger, support, etc.',
-              icon: Play,
-              border: 'group-hover:border-purple-500/20'
-            }
-          ].map((feat, i) => (
-            <motion.div 
-              key={i}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.05 }}
-              className="bg-charcoal/30 border border-white/5 rounded-2xl p-6 hover:bg-charcoal/50 hover:border-white/10 transition-all duration-300 group"
-            >
-              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-primary mb-4.5 border border-white/5 group-hover:border-primary/10 transition-all duration-300">
-                <feat.icon className="w-5 h-5" />
+          <div className="reveal" style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 32, transitionDelay: '.18s' }}>
+            <Link href="/simulation" className="btn-iris-primary focus-ring">
+              <Play className="w-[15px] h-[15px]" fill="currentColor" strokeWidth={0} /> Run a simulation
+            </Link>
+            <Link href="/workflow" className="btn-iris-ghost focus-ring">
+              <Activity className="w-[15px] h-[15px]" style={{ color: 'var(--accent-bright)' }} /> Explore live graph
+            </Link>
+          </div>
+          <div className="reveal" style={{ display: 'flex', gap: 26, marginTop: 40, flexWrap: 'wrap', transitionDelay: '.24s' }}>
+            {([['8', 'agent nodes'], ['0.75', 'confidence gate'], ['6', 'sandbox scenarios']] as const).map(([n, l], k) => (
+              <div key={k}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em' }}>{n}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--fg-faint)', marginTop: 2 }}>{l}</div>
               </div>
-              <h3 className="text-sm font-semibold text-white group-hover:text-primary transition-colors">
-                {feat.title}
-              </h3>
-              <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">
-                {feat.desc}
-              </p>
-            </motion.div>
-          ))}
+            ))}
+          </div>
+        </div>
+        <HeroPreview />
+      </section>
+
+      {/* FEATURES */}
+      <section style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: 'clamp(40px,6vw,88px) clamp(20px,4vw,40px)', borderTop: '1px solid var(--line)' }}>
+        <SectionHead kicker="Engine capabilities" title="Designed for observability & reliability" sub="Traditional AI pipelines run inside a black box. Agentia opens the hood — visual clarity at every transition." />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 18, marginTop: 48 }}>
+          {FEATURES.map((f, i) => <FeatureCard key={i} f={f} i={i} />)}
         </div>
       </section>
 
-      {/* Workflow Showcase Section */}
-      <section className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20 border-t border-white/5">
-        <div className="grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-12 items-center">
-          
-          {/* Left Text */}
-          <div className="space-y-6">
-            <span className="text-[10px] font-mono text-primary font-bold tracking-widest uppercase">
-              WORKFLOW STAGES
-            </span>
-            <h2 className="text-3xl font-bold tracking-tight text-white leading-tight">
-              Anatomy of the AI Automation Chain
-            </h2>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Watch how our system ingests, categorizes, validates, and dispatches messages. The workflow updates statefully and halts whenever human intervention is required.
+      {/* STAGES */}
+      <section style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: 'clamp(40px,6vw,88px) clamp(20px,4vw,40px)', borderTop: '1px solid var(--line)' }}>
+        <div className="stages-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,.82fr) minmax(0,1.18fr)', gap: 'clamp(28px,5vw,64px)', alignItems: 'center' }}>
+          <div className="reveal">
+            <div className="kicker" style={{ marginBottom: 14 }}>Workflow stages</div>
+            <h2 style={{ fontSize: 'clamp(26px,3vw,38px)', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.1 }}>Anatomy of the automation chain</h2>
+            <p style={{ marginTop: 16, fontSize: 15, lineHeight: 1.65, color: 'var(--fg-dim)' }}>
+              Watch the system ingest, categorize, validate, and dispatch — updating statefully and halting the moment human intervention is required.
             </p>
-            
-            <div className="pt-4 flex gap-4">
-              <Link 
-                href="/simulation"
-                className="px-5 py-3 rounded-xl bg-primary text-black font-bold text-xs tracking-wider uppercase hover:bg-primary-light transition-all shadow-lg shadow-primary/5 flex items-center gap-1.5"
-              >
-                <span>Run Demo Simulation</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
+            <Link href="/simulation" className="btn-iris-primary focus-ring" style={{ marginTop: 28 }}>
+              Run demo simulation <ArrowRight className="w-[15px] h-[15px]" />
+            </Link>
           </div>
-
-          {/* Right Showcase Steps list */}
-          <div className="space-y-3 relative before:absolute before:left-6 before:top-4 before:bottom-4 before:w-[1px] before:bg-white/5">
-            {steps.map((step, idx) => {
-              const isActive = activeStep === idx;
-              const Icon = step.icon;
-
-              return (
-                <div 
-                  key={idx}
-                  onClick={() => setActiveStep(idx)}
-                  className={`pl-12 relative flex items-start gap-4 p-4 rounded-2xl cursor-pointer border transition-all duration-500 ${
-                    isActive 
-                      ? 'border-primary/25 bg-primary/5 shadow-md shadow-primary/2.5' 
-                      : 'border-transparent hover:bg-white/2 bg-transparent'
-                  }`}
-                >
-                  {/* Timeline bullet icon */}
-                  <div className={`absolute left-[13px] top-4.5 w-6 h-6 rounded-full flex items-center justify-center border transition-all duration-500 ${
-                    isActive 
-                      ? 'bg-primary border-primary text-black shadow-lg shadow-primary/30 scale-110' 
-                      : 'bg-charcoal border-white/5 text-gray-500'
-                  }`}>
-                    <Icon className="w-3 h-3" />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-bold transition-colors duration-500 ${isActive ? 'text-primary' : 'text-white'}`}>
-                        {step.title}
-                      </span>
-                      {isActive && (
-                        <span className="text-[7px] font-mono bg-primary/10 border border-primary/25 text-primary px-1.5 py-0.5 rounded font-bold uppercase tracking-widest animate-pulse">
-                          Active Phase
-                        </span>
-                      )}
-                    </div>
-                    <p className={`text-[10.5px] mt-1 transition-colors duration-500 leading-relaxed ${isActive ? 'text-gray-300 font-medium' : 'text-gray-500'}`}>
-                      {step.desc}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
+          <div className="reveal" style={{ transitionDelay: '.1s' }}><StagesShowcase /></div>
         </div>
       </section>
 
-      {/* Tech Stack Section */}
-      <section className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20 border-t border-white/5 bg-[#030303]/40">
-        <div className="text-center space-y-4 mb-16">
-          <span className="text-[10px] font-mono text-primary font-bold tracking-widest uppercase">
-            ENGINEERING STACK
-          </span>
-          <h2 className="text-3xl font-bold tracking-tight text-white">
-            Built on Industry Standard AI Frameworks
-          </h2>
-          <p className="text-xs text-gray-500 max-w-lg mx-auto">
-            Leveraging state-of-the-art tools across the agentic development lifecycle, from databases to visual flows.
-          </p>
-        </div>
-
-        {/* Tech Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
-          {[
-            { name: 'FastAPI', category: 'Backend Host', desc: 'High perf python API framework', color: 'border-teal-500/10 hover:border-teal-500/30' },
-            { name: 'LangGraph', category: 'AI Orchestration', desc: 'Cyclic graph agent compiler', color: 'border-primary/10 hover:border-primary/30' },
-            { name: 'ChromaDB', category: 'Vector Database', desc: 'Semantic semantic retrieval DB', color: 'border-yellow-500/10 hover:border-yellow-500/30' },
-            { name: 'Gemini', category: 'Generation model', desc: 'Multimodal model via Google API', color: 'border-blue-500/10 hover:border-blue-500/30' },
-            { name: 'Groq', category: 'Inference Host', desc: 'Ultra-fast Llama-3.3 execution', color: 'border-orange-500/10 hover:border-orange-500/30' },
-            { name: 'React Flow', category: 'UI Visualizer', desc: 'Nodes & Edges rendering canvas', color: 'border-pink-500/10 hover:border-pink-500/30' },
-            { name: 'Next.js', category: 'Web Application', desc: 'Sleek App Router host wrapper', color: 'border-white/10 hover:border-white/30' }
-          ].map((tech, i) => (
-            <div 
-              key={i}
-              className={`bg-charcoal/20 border rounded-xl p-4.5 text-center flex flex-col justify-between hover:bg-charcoal/50 transition-all duration-300 ${tech.color}`}
-            >
-              <div>
-                <span className="text-[8px] font-mono text-gray-500 uppercase tracking-widest font-bold block mb-1">
-                  {tech.category}
-                </span>
-                <h4 className="text-xs font-bold text-white tracking-wide">
-                  {tech.name}
-                </h4>
-              </div>
-              <p className="text-[9px] text-gray-600 mt-2.5 leading-snug">
-                {tech.desc}
-              </p>
+      {/* TECH STACK */}
+      <section style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: 'clamp(40px,6vw,88px) clamp(20px,4vw,40px)', borderTop: '1px solid var(--line)' }}>
+        <SectionHead kicker="Engineering stack" title="Built on industry-standard AI frameworks" sub="State-of-the-art tools across the agentic lifecycle — from vector databases to live flow rendering." />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px,1fr))', gap: 14, marginTop: 48 }}>
+          {TECH.map((t, i) => (
+            <div key={i} className="reveal tech-card" style={{ padding: 18, textAlign: 'center', transitionDelay: `${i * 0.05}s`, background: 'var(--ink-800)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent-bright)', fontWeight: 600 }}>{t.cat}</div>
+              <div style={{ fontSize: 15, fontWeight: 600, marginTop: 8 }}>{t.name}</div>
+              <div style={{ fontSize: 11, color: 'var(--fg-faint)', marginTop: 7, lineHeight: 1.45 }}>{t.desc}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="relative z-10 w-full max-w-7xl mx-auto px-6 py-12 border-t border-white/5 bg-[#030303]/60">
-        <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] gap-8 items-center">
-          <div className="space-y-3.5">
-            <div className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-primary to-primary-light flex items-center justify-center shadow shadow-primary/20">
-                <Cpu className="w-3.5 h-3.5 text-black stroke-[2.5]" />
+      {/* FOOTER */}
+      <footer style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: 'clamp(40px,5vw,72px) clamp(20px,4vw,40px) 56px', borderTop: '1px solid var(--line)' }}>
+        <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.5fr) minmax(0,1fr)', gap: 32, alignItems: 'start' }}>
+          <div>
+            <div className="flex items-center gap-3">
+              <div className="grid place-items-center" style={{ width: 30, height: 30, borderRadius: 9, background: 'linear-gradient(145deg, var(--accent-bright), var(--accent-deep))', boxShadow: '0 6px 18px -6px rgba(var(--accent-rgb), .7)' }}>
+                <Command className="w-4 h-4" strokeWidth={2.2} style={{ color: 'var(--accent-ink)' }} />
               </div>
-              <span className="font-sans font-bold text-sm tracking-wider text-white">
-                AGENTIA WORKFLOW ENGINE
-              </span>
+              <div className="leading-none">
+                <div className="font-semibold text-[15px]" style={{ letterSpacing: '.06em' }}>AGENTIA</div>
+                <div className="font-mono font-semibold mt-0.5" style={{ fontSize: 8, letterSpacing: '.26em', color: 'var(--accent-bright)' }}>WORKFLOW ENGINE</div>
+              </div>
             </div>
-            <p className="text-[10px] text-gray-500 leading-relaxed max-w-md">
-              A premium showcase project demonstrating stateful multi-agent system orchestration, semantic vector retrieval (RAG), and human-in-the-loop audit overrides. Built for interview evaluation and portfolio demonstration.
+            <p style={{ marginTop: 16, fontSize: 13, lineHeight: 1.65, color: 'var(--fg-faint)', maxWidth: 440 }}>
+              A showcase of stateful multi-agent orchestration, semantic vector retrieval, and human-in-the-loop audit overrides. Built for portfolio and evaluation.
             </p>
           </div>
-
-          {/* Social Links */}
-          <div className="flex flex-col md:items-end gap-3 text-xs">
-            <span className="text-[9px] font-mono text-gray-500 font-bold tracking-widest uppercase">
-              RESOURCES & SOCIALS
-            </span>
-            <div className="flex flex-wrap gap-4">
-              <a 
-                href="https://github.com/tushar330/langgraph-email-automation" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white flex items-center gap-1.5 transition-colors"
-              >
-                <span>GitHub Repository</span>
-                <ExternalLink className="w-3 h-3 text-gray-500" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="kicker" style={{ color: 'var(--fg-faint)' }}>Resources</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
+              <a href="https://github.com/tushar330/langgraph-email-automation" target="_blank" rel="noopener noreferrer" className="footer-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--fg-dim)' }}>
+                <ExternalLink className="w-[15px] h-[15px]" /> GitHub
               </a>
-              <span className="text-white/10">|</span>
-              <a 
-                href="https://www.linkedin.com/in/tushar-tiwari-72151a289/" 
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white flex items-center gap-1.5 transition-colors"
-              >
-                <span>LinkedIn</span>
-                <ExternalLink className="w-3 h-3 text-gray-500" />
+              <a href="https://www.linkedin.com/in/tushar-tiwari-72151a289/" target="_blank" rel="noopener noreferrer" className="footer-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--fg-dim)' }}>
+                <ExternalLink className="w-[15px] h-[15px]" /> LinkedIn
               </a>
-              <span className="text-white/10">|</span>
-              <a 
-                href="#" 
-                className="text-gray-400 hover:text-white flex items-center gap-1.5 transition-colors"
-              >
-                <span>Developer Resume</span>
-                <ExternalLink className="w-3 h-3 text-gray-500" />
+              <a href="#" className="footer-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--fg-dim)' }}>
+                <ExternalLink className="w-[15px] h-[15px]" /> Resume
               </a>
             </div>
           </div>
         </div>
-
-        <div className="mt-8 pt-6 border-t border-white/5 flex justify-between items-center text-[9px] font-mono text-gray-600">
-          <span>&copy; {new Date().getFullYear()} AGENTIA. ALL RIGHTS RESERVED.</span>
-          <span>BUILT WITH NEXT.JS APP ROUTER & TAILWIND CSS</span>
+        <div style={{ marginTop: 36, paddingTop: 22, borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.06em', color: 'var(--fg-ghost)' }}>
+          <span>© {new Date().getFullYear()} AGENTIA · ALL RIGHTS RESERVED</span>
+          <span>BUILT WITH NEXT.JS · LANGGRAPH · CHROMADB</span>
         </div>
       </footer>
-
     </div>
   );
 }

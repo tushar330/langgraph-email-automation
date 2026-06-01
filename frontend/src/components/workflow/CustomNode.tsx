@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { Mail, Tag, Database, PenTool, CheckCircle, UserCheck, Send, AlertTriangle } from 'lucide-react';
+import { Mail, Tag, Database, PenTool, CheckCircle, UserCheck, Send } from 'lucide-react';
+import { confColor } from '@/lib/uiHooks';
 
 export interface CustomNodeData {
   label: string;
@@ -22,81 +23,67 @@ const iconMap = {
   send: Send,
 };
 
+/* status → visual (reserved semantic colors; accent = running only) */
+function nodeVisual(status: CustomNodeData['status']) {
+  switch (status) {
+    case 'completed': return { border: 'var(--ok)', glow: 'var(--ok-rgb)', icon: 'var(--ok)', bg: 'color-mix(in oklab, var(--ok) 9%, var(--ink-800))' };
+    case 'running': return { border: 'var(--accent)', glow: 'var(--accent-rgb)', icon: 'var(--accent-bright)', bg: 'color-mix(in oklab, var(--accent) 11%, var(--ink-800))' };
+    case 'failed': return { border: 'var(--bad)', glow: 'var(--bad-rgb)', icon: 'var(--bad)', bg: 'color-mix(in oklab, var(--bad) 9%, var(--ink-800))' };
+    default: return { border: 'var(--line-2)', glow: '0,0,0', icon: 'var(--fg-faint)', bg: 'var(--ink-800)' };
+  }
+}
+
 function CustomNode({ data }: { data: CustomNodeData }) {
   const IconComponent = iconMap[data.icon] || Mail;
-
-  // Resolve colors based on status
-  let borderClass = 'border-white/5';
-  let glowClass = '';
-  let bgClass = 'bg-charcoal/80';
-  let iconColor = 'text-gray-400';
-
-  if (data.status === 'completed') {
-    borderClass = 'border-green-500/35';
-    glowClass = 'shadow-[0_0_20px_rgba(34,197,94,0.08)]';
-    bgClass = 'bg-[#0a1810]/95';
-    iconColor = 'text-green-400';
-  } else if (data.status === 'running') {
-    borderClass = 'border-primary/50 animate-pulse';
-    glowClass = 'shadow-[0_0_20px_rgba(255,107,0,0.12)]';
-    bgClass = 'bg-[#1a1005]/95';
-    iconColor = 'text-primary';
-  } else if (data.status === 'failed') {
-    borderClass = 'border-red-500/35';
-    glowClass = 'shadow-[0_0_20px_rgba(239,68,68,0.08)]';
-    bgClass = 'bg-[#1a0a0d]/95';
-    iconColor = 'text-red-400';
-  }
+  const v = nodeVisual(data.status);
+  const badgeColor = data.status === 'completed' ? 'var(--ok)' : data.status === 'failed' ? 'var(--bad)' : data.status === 'running' ? 'var(--accent-bright)' : 'var(--fg-faint)';
 
   return (
-    <div className={`w-[220px] rounded-xl border p-3.5 backdrop-blur-md transition-all duration-500 ${bgClass} ${borderClass} ${glowClass}`}>
-      {/* Handles */}
+    <div
+      style={{
+        width: 220,
+        borderRadius: 'var(--r-sm)',
+        border: `1px solid ${v.border}`,
+        background: v.bg,
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        padding: 12,
+        position: 'relative',
+        boxShadow: data.status !== 'pending' ? `0 0 22px -6px rgba(${v.glow}, .5)` : 'var(--e1)',
+        transition: 'all .5s var(--ease)',
+      }}
+    >
       <Handle type="target" position={Position.Top} className="!bg-white/10 !border-0 !w-2 !h-2" />
       <Handle type="source" position={Position.Bottom} className="!bg-white/10 !border-0 !w-2 !h-2" />
 
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-lg ${data.status === 'running' ? 'bg-primary/10' : data.status === 'completed' ? 'bg-green-500/10' : data.status === 'failed' ? 'bg-red-500/10' : 'bg-white/5'} transition-all duration-500`}>
-          <IconComponent className={`w-4 h-4 ${iconColor}`} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs font-semibold text-white tracking-wide truncate">{data.label}</div>
-          <div className="text-[9px] text-gray-500 font-medium truncate">{data.sublabel}</div>
-        </div>
-      </div>
-
-      {/* Dynamic Content Details */}
-      {(data.confidence !== undefined || data.badge || data.details) && (
-        <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between">
-          {data.confidence !== undefined ? (
-            <div className="flex items-center gap-1">
-              <span className="text-[8px] uppercase tracking-wider text-gray-500 font-bold">Confidence:</span>
-              <span className={`text-[10px] font-mono font-bold ${data.confidence >= 0.75 ? 'text-green-400' : 'text-primary'}`}>
-                {Math.round(data.confidence * 100)}%
-              </span>
-            </div>
-          ) : (
-            <div />
-          )}
-
-          {data.badge && (
-            <span className={`text-[8px] font-mono font-bold px-2 py-0.5 rounded-full uppercase ${
-              data.status === 'completed' ? 'bg-green-500/10 text-green-400 border border-green-500/10' :
-              data.status === 'failed' ? 'bg-red-500/10 text-red-400 border border-red-500/10' :
-              data.status === 'running' ? 'bg-primary/10 text-primary border border-primary/10' :
-              'bg-white/5 text-gray-400 border border-white/5'
-            }`}>
-              {data.badge}
-            </span>
-          )}
-        </div>
+      {/* running ping */}
+      {data.status === 'running' && (
+        <span style={{ position: 'absolute', top: 9, right: 9, display: 'inline-flex', width: 8, height: 8 }}>
+          <span className="ping" style={{ position: 'absolute', inset: 0, color: 'var(--accent)', borderRadius: 99 }} />
+          <span style={{ position: 'relative', width: 8, height: 8, borderRadius: 99, background: 'var(--accent)' }} />
+        </span>
       )}
 
-      {/* Progress status indicators */}
-      {data.status === 'running' && (
-        <div className="absolute top-2 right-2 flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+      {/* header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 30, height: 30, borderRadius: 8, display: 'grid', placeItems: 'center', flexShrink: 0, background: data.status === 'pending' ? 'rgba(255,255,255,.05)' : `color-mix(in oklab, ${v.icon} 16%, transparent)`, color: v.icon, transition: 'all .5s var(--ease)' }}>
+          <IconComponent className="w-[15px] h-[15px]" />
+        </div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--fg)' }}>{data.label}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--fg-faint)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{data.sublabel}</div>
+        </div>
+        {data.confidence != null && data.status === 'completed' && (
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: confColor(data.confidence) }}>{Math.round(data.confidence * 100)}%</span>
+        )}
+      </div>
+
+      {/* badge row */}
+      {data.badge && (
+        <div style={{ marginTop: 10, paddingTop: 9, borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'flex-end' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 99, color: badgeColor, background: `color-mix(in oklab, ${badgeColor} 12%, transparent)`, border: `1px solid color-mix(in oklab, ${badgeColor} 22%, transparent)` }}>
+            {data.badge}
+          </span>
         </div>
       )}
     </div>

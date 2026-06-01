@@ -9,6 +9,7 @@ import WorkflowGraph from '@/components/workflow/WorkflowGraph';
 import LogsTimeline from '@/components/workflow/LogsTimeline';
 import { AlertCircle, Play, Info, ShieldAlert, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { PageShell, PageHeader, InfoTip, Chip } from '@/lib/uiHooks';
 
 export default function SimulationPage() {
   const { fetchEmails, error, currentExecution, isExecuting } = useWorkflowStore();
@@ -19,119 +20,72 @@ export default function SimulationPage() {
   }, [fetchEmails]);
 
   return (
-    <div className="flex-1 w-full max-w-7xl mx-auto px-6 py-6 flex flex-col gap-6 relative z-10">
-      
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-5">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="text-[10px] font-mono text-primary font-bold tracking-widest uppercase">
-              SANDBOX SIMULATION ENV
-            </span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white mt-1">
-            Agent Execution Board
-          </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Select a custom inbound email to trigger the multi-stage LangGraph workflow. Monitor state transition logs in real-time.
-          </p>
-        </div>
-
-        {/* Global info tip */}
-        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/5 border border-white/5 max-w-sm text-[10px] leading-relaxed text-gray-400">
-          <Info className="w-4 h-4 text-primary shrink-0" />
-          <span>
-            Toggle <strong>'Force Human Review'</strong> to test the operator override mechanism on the review board.
-          </span>
-        </div>
-      </div>
+    <PageShell>
+      <PageHeader
+        pulse
+        kicker="Sandbox simulation env"
+        title="Agent Execution Board"
+        sub="Select a custom inbound email to trigger the multi-stage LangGraph workflow. Watch state transitions stream in real time."
+        right={<InfoTip icon={Info}>Toggle <strong style={{ color: 'var(--fg)' }}>Human Review</strong> to test the operator override path.</InfoTip>}
+      />
 
       {/* Error alert */}
       {error && (
-        <div className="flex items-center gap-3 p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-xs text-red-400">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 16, borderRadius: 'var(--r)', border: '1px solid color-mix(in oklab, var(--bad) 28%, transparent)', background: 'color-mix(in oklab, var(--bad) 6%, transparent)', fontSize: 12.5, color: 'var(--bad)' }}>
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      {/* Human review required banner */}
+      {/* Human review required banner (amber = needs review) */}
       {needsReview && (
-        <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-orange-500/30 bg-orange-500/5 shadow-[0_0_20px_rgba(255,107,0,0.05)]">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 shrink-0">
-              <ShieldAlert className="w-4 h-4 text-orange-400" />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: 16, borderRadius: 'var(--r)', border: '1px solid color-mix(in oklab, var(--warn) 32%, transparent)', background: 'color-mix(in oklab, var(--warn) 7%, transparent)', boxShadow: '0 0 24px -8px color-mix(in oklab, var(--warn) 40%, transparent)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ padding: 9, borderRadius: 'var(--r-sm)', background: 'color-mix(in oklab, var(--warn) 14%, transparent)', border: '1px solid color-mix(in oklab, var(--warn) 28%, transparent)', color: 'var(--warn)', flexShrink: 0 }}>
+              <ShieldAlert className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-xs font-bold text-orange-400 tracking-wide uppercase">Human Review Required</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">
+              <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.02em', textTransform: 'uppercase', color: 'var(--warn)' }}>Human Review Required</p>
+              <p style={{ fontSize: 11.5, color: 'var(--fg-dim)', marginTop: 2 }}>
                 The AI draft confidence was below the auto-send threshold. An operator must review and approve or reject the reply before it is dispatched.
               </p>
             </div>
           </div>
-          <Link
-            href="/review"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-500/10 border border-orange-500/30 hover:bg-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-wider transition-all shrink-0"
-          >
+          <Link href="/review" className="focus-ring" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 'var(--r-sm)', background: 'color-mix(in oklab, var(--warn) 12%, transparent)', border: '1px solid color-mix(in oklab, var(--warn) 32%, transparent)', color: 'var(--warn)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', flexShrink: 0 }}>
             <span>Open Review Board</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       )}
 
-      {/* Main Board Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start flex-1">
-        
-        {/* Left Side: Selectors & Configuration */}
-        <div className="flex flex-col gap-6 h-full">
-          <div className="h-[280px] lg:h-[320px] shrink-0">
-            <EmailSelector />
-          </div>
-          <div className="flex-1">
-            <SimulationControls />
-          </div>
+      {/* Board grid */}
+      <div className="sim-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,340px) minmax(0,1fr)', gap: 20, alignItems: 'start' }}>
+        {/* Left */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ height: 300 }}><EmailSelector /></div>
+          <SimulationControls />
         </div>
 
-        {/* Right Side: Visualizers & Logs */}
-        <div className="flex flex-col gap-6 h-full min-w-0">
-          
-          {/* Top Row: Metrics Panel */}
-          <div className="shrink-0">
-            <MetricsPanel />
-          </div>
-
-          {/* Bottom Grid: React Flow Visualizer & Live logs */}
-          <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6 min-h-[500px] flex-1">
-            
-            {/* React Flow Engine Canvas */}
-            <div className="flex flex-col border border-white/5 rounded-2xl bg-charcoal/30 overflow-hidden relative glass-panel min-h-[450px]">
-              <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between bg-white/5 shrink-0">
-                <div className="flex items-center gap-2">
-                  <Play className="w-4 h-4 text-primary" />
-                  <span className="text-xs font-semibold tracking-wider text-white">ORCHESTRATION GRAPH VISUALIZER</span>
+        {/* Right */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+          <MetricsPanel />
+          <div className="sim-canvas-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,330px)', gap: 20 }}>
+            {/* Graph panel */}
+            <div className="panel" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 460 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid var(--line)', background: 'rgba(255,255,255,.02)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                  <Play className="w-3.5 h-3.5" style={{ color: 'var(--accent-bright)' }} />
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Orchestration Graph</span>
                 </div>
-                {isExecuting && (
-                  <span className="text-[8px] font-mono bg-primary/10 border border-primary/25 text-primary px-2 py-0.5 rounded font-bold uppercase animate-pulse">
-                    ACTIVE PROCESSING
-                  </span>
-                )}
+                {isExecuting && <Chip color="var(--accent-bright)" tone={0.12}>active</Chip>}
               </div>
-              <div className="flex-1 min-h-0 relative">
-                <WorkflowGraph />
-              </div>
+              <div style={{ flex: 1, minHeight: 0, position: 'relative' }}><WorkflowGraph /></div>
             </div>
-
-            {/* Logs Timeline sidebar */}
-            <div className="h-[400px] xl:h-auto shrink-0 xl:shrink">
-              <LogsTimeline />
-            </div>
-
+            {/* Logs */}
+            <div style={{ minHeight: 460 }}><LogsTimeline /></div>
           </div>
-
         </div>
-
       </div>
-
-    </div>
+    </PageShell>
   );
 }

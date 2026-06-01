@@ -1,197 +1,172 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useWorkflowStore } from '@/store/workflowStore';
-import { ShieldAlert, CheckCircle, XCircle, Info, Edit3, ArrowRight, Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ShieldCheck, CheckCircle, XCircle, Edit3, Play } from 'lucide-react';
+import { Chip, confColor } from '@/lib/uiHooks';
+
+function MiniMetric({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div style={{ borderRadius: 'var(--r-sm)', border: '1px solid var(--line)', background: 'var(--ink-850)', padding: 12 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--fg-faint)', fontWeight: 600 }}>{label}</div>
+      <div style={{ marginTop: 7, fontSize: 13, fontWeight: 600, color: color || 'var(--fg)', textTransform: 'capitalize', fontFamily: color ? 'var(--font-mono)' : 'var(--font-sans)' }}>{value}</div>
+    </div>
+  );
+}
 
 export default function ReviewForm() {
   const { pausedExecutions, lastPausedExecution, approveWorkflow, isExecuting } = useWorkflowStore();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [editedResponse, setEditedResponse] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [flash, setFlash] = useState<'approved' | 'rejected' | null>(null);
 
   const keys = Object.keys(pausedExecutions);
-  const pendingCount = keys.length;
-
-  // Selected execution to review
-  const currentReview = activeId ? pausedExecutions[activeId] : lastPausedExecution;
+  const current = activeId ? pausedExecutions[activeId] : lastPausedExecution;
 
   useEffect(() => {
-    if (currentReview) {
-      setEditedResponse(currentReview.generated_response || '');
-      setActiveId(currentReview.metadata.id);
+    if (current) {
+      setDraft(current.generated_response || '');
+      setActiveId(current.metadata.id);
     } else {
-      setEditedResponse('');
+      setDraft('');
       setActiveId(null);
     }
-    setIsEditing(false);
-  }, [currentReview]);
+    setEditing(false);
+  }, [current]);
 
-  const handleApprove = async () => {
-    if (!currentReview) return;
-    try {
-      await approveWorkflow(currentReview.metadata.id, true, editedResponse);
-    } catch (e) {
-      console.error(e);
-    }
+  const decide = (ok: boolean) => {
+    if (!current) return;
+    setFlash(ok ? 'approved' : 'rejected');
+    setTimeout(async () => {
+      try {
+        if (ok) await approveWorkflow(current.metadata.id, true, draft);
+        else await approveWorkflow(current.metadata.id, false);
+      } catch (e) {
+        console.error(e);
+      }
+      setFlash(null);
+    }, 650);
   };
 
-  const handleReject = async () => {
-    if (!currentReview) return;
-    try {
-      await approveWorkflow(currentReview.metadata.id, false);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  if (pendingCount === 0 || !currentReview) {
+  /* empty state */
+  if (keys.length === 0 || !current) {
     return (
-      <div className="flex flex-col items-center justify-center text-center p-8 bg-charcoal/40 border border-white/5 rounded-2xl min-h-[400px] glass-panel space-y-4">
-        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
-          <ShieldAlert className="w-6 h-6 text-gray-500" />
-        </div>
-        <div>
-          <h3 className="text-sm font-semibold text-white tracking-wide">NO PENDING HUMAN REVIEWS</h3>
-          <p className="text-xs text-gray-500 mt-2 max-w-sm mx-auto leading-relaxed">
-            All workflows have been successfully routed or auto-approved. Run a simulation with the 
-            <strong className="text-primary"> 'Force Human Review' </strong> toggle turned on to pause execution here.
+      <div className="panel" style={{ minHeight: 420, display: 'grid', placeItems: 'center', textAlign: 'center', padding: 32 }}>
+        <div style={{ maxWidth: 420 }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', display: 'grid', placeItems: 'center', margin: '0 auto 20px', background: 'color-mix(in oklab, var(--ok) 8%, transparent)', border: '1px solid color-mix(in oklab, var(--ok) 25%, transparent)' }}>
+            <ShieldCheck className="w-7 h-7" style={{ color: 'var(--ok)' }} />
+          </div>
+          <h3 style={{ fontSize: 17, fontWeight: 600 }}>Queue is clear</h3>
+          <p style={{ fontSize: 13.5, color: 'var(--fg-dim)', marginTop: 10, lineHeight: 1.6 }}>
+            All workflows have been routed or auto-approved. Run a simulation with <strong style={{ color: 'var(--accent-bright)' }}>Human Review</strong> on to pause one here.
           </p>
+          <Link href="/simulation" className="btn-iris-ghost focus-ring" style={{ marginTop: 22 }}>
+            <Play className="w-3.5 h-3.5" /> Go to simulation
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr] gap-6 items-start">
-      {/* Pending Reviews Sidebar */}
-      <div className="flex flex-col bg-charcoal/40 border border-white/5 rounded-2xl p-4 glass-panel space-y-3">
-        <span className="text-[10px] font-mono text-gray-500 font-bold tracking-widest uppercase pb-2 border-b border-white/5">
-          PENDING AUDIT QUEUE ({pendingCount})
-        </span>
-        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-          {keys.map((key) => {
-            const item = pausedExecutions[key];
-            const isSelected = activeId === item.metadata.id;
+    <div className="review-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,260px) minmax(0,1fr)', gap: 20, alignItems: 'start' }}>
+      {/* queue */}
+      <div className="panel" style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--fg-faint)', fontWeight: 600, paddingBottom: 10, borderBottom: '1px solid var(--line)' }}>
+          Pending audit queue ({keys.length})
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 360, overflowY: 'auto' }}>
+          {keys.map((k) => {
+            const it = pausedExecutions[k];
+            const on = current.metadata.id === it.metadata.id;
             return (
               <button
-                key={item.metadata.id}
-                onClick={() => setActiveId(item.metadata.id)}
-                className={`w-full text-left p-3 rounded-xl border text-xs transition-all ${
-                  isSelected
-                    ? 'border-primary/45 bg-primary/5 text-white'
-                    : 'border-white/5 bg-[#0b0b0b]/40 text-gray-400 hover:border-white/10 hover:bg-[#0b0b0b]/60'
-                }`}
+                key={k}
+                onClick={() => setActiveId(it.metadata.id)}
+                className="focus-ring"
+                style={{ textAlign: 'left', padding: 12, borderRadius: 'var(--r-sm)', border: `1px solid ${on ? 'var(--accent-line)' : 'var(--line)'}`, background: on ? 'color-mix(in oklab, var(--accent) 8%, transparent)' : 'var(--ink-850)', transition: 'all .25s' }}
               >
-                <div className="font-bold truncate">{item.email.sender}</div>
-                <div className="text-[10px] text-gray-500 truncate mt-0.5">{item.email.subject}</div>
-                <div className="flex items-center gap-1.5 mt-2">
-                  <span className="text-[9px] font-mono bg-white/5 px-2 py-0.5 rounded border border-white/5 text-gray-400">
-                    {item.category.toUpperCase().replace('_', ' ')}
-                  </span>
-                </div>
+                <div style={{ fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.email.sender}</div>
+                <div style={{ fontSize: 11, color: 'var(--fg-faint)', marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.email.subject}</div>
+                <div style={{ marginTop: 8 }}><Chip color="var(--warn)" tone={0.1}>{it.category.replace(/_/g, ' ')}</Chip></div>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Review Work Area */}
-      <div className="flex flex-col bg-charcoal/40 border border-white/5 rounded-2xl p-6 glass-panel space-y-6">
-        {/* Header Metadata */}
-        <div className="flex justify-between items-start gap-4 pb-4 border-b border-white/5">
+      {/* work area */}
+      <div className="panel" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 20, position: 'relative', overflow: 'hidden' }}>
+        {/* confirm flash */}
+        {flash && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 20, display: 'grid', placeItems: 'center', animation: 'a-fade .2s ease', background: 'color-mix(in oklab, var(--ink-900) 75%, transparent)', backdropFilter: 'blur(4px)' }}>
+            <div style={{ textAlign: 'center', animation: 'a-pop .35s var(--ease)' }}>
+              <div style={{ width: 60, height: 60, borderRadius: '50%', display: 'grid', placeItems: 'center', margin: '0 auto 12px', background: `color-mix(in oklab, ${flash === 'approved' ? 'var(--ok)' : 'var(--bad)'} 16%, transparent)`, border: `1px solid ${flash === 'approved' ? 'var(--ok)' : 'var(--bad)'}` }}>
+                {flash === 'approved' ? <CheckCircle className="w-7 h-7" style={{ color: 'var(--ok)' }} /> : <XCircle className="w-7 h-7" style={{ color: 'var(--bad)' }} />}
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>{flash === 'approved' ? 'Dispatched via Gmail' : 'Draft discarded'}</div>
+            </div>
+          </div>
+        )}
+
+        {/* header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', paddingBottom: 16, borderBottom: '1px solid var(--line)' }}>
           <div>
-            <span className="text-[9px] font-mono text-primary font-bold tracking-widest uppercase">HUMAN IN THE LOOP REVIEW GATEWAY</span>
-            <h3 className="text-sm font-semibold text-white mt-1">Reviewing response for: {currentReview.email.sender}</h3>
-            <p className="text-[11px] text-gray-500 mt-1">Subject: {currentReview.email.subject}</p>
+            <span className="kicker">Human-in-the-loop gateway</span>
+            <h3 style={{ fontSize: 16, fontWeight: 600, marginTop: 6 }}>Reviewing reply for {current.email.sender}</h3>
+            <p style={{ fontSize: 12, color: 'var(--fg-faint)', marginTop: 4 }}>Subject · {current.email.subject}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-orange-400 bg-orange-500/10 border border-orange-500/20 px-3 py-1 rounded-full uppercase tracking-wider glow-orange">
-              Awaiting Approval
-            </span>
+          <Chip color="var(--warn)" tone={0.12} style={{ flexShrink: 0 }}>Awaiting approval</Chip>
+        </div>
+
+        {/* mini metrics */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: 12 }}>
+          <MiniMetric label="Classification" value={current.category.replace(/_/g, ' ')} />
+          <MiniMetric label="Classifier conf" value={`${Math.round(current.category_confidence * 100)}%`} color="var(--accent-bright)" />
+          <MiniMetric label="Draft conf" value={`${Math.round(current.response_confidence * 100)}%`} color={confColor(current.response_confidence)} />
+        </div>
+
+        {/* inbound message */}
+        <div>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--fg-faint)', fontWeight: 600 }}>Inbound message</span>
+          <div style={{ marginTop: 8, padding: 14, borderRadius: 'var(--r)', border: '1px solid var(--line)', background: 'var(--ink-850)', fontSize: 12.5, lineHeight: 1.6, color: 'var(--fg-dim)', maxHeight: 110, overflowY: 'auto' }}>
+            {current.email.body}
           </div>
         </div>
 
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div className="bg-[#0b0b0b]/60 border border-white/5 rounded-xl p-3 flex flex-col justify-between">
-            <span className="text-[9px] font-mono text-gray-500 uppercase font-bold tracking-wider">Classification</span>
-            <span className="text-xs font-semibold text-white mt-1.5 uppercase truncate">
-              {currentReview.category.replace(/_/g, ' ')}
+        {/* editable draft */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--fg-faint)', fontWeight: 600 }}>
+              <Edit3 className="w-3.5 h-3.5" style={{ color: 'var(--accent-bright)' }} /> AI generated draft
             </span>
-          </div>
-          <div className="bg-[#0b0b0b]/60 border border-white/5 rounded-xl p-3 flex flex-col justify-between">
-            <span className="text-[9px] font-mono text-gray-500 uppercase font-bold tracking-wider">Classifier Confidence</span>
-            <span className="text-xs font-mono font-bold text-primary mt-1.5">
-              {Math.round(currentReview.category_confidence * 100)}%
-            </span>
-          </div>
-          <div className="bg-[#0b0b0b]/60 border border-white/5 rounded-xl p-3 flex flex-col justify-between">
-            <span className="text-[9px] font-mono text-gray-500 uppercase font-bold tracking-wider">Draft Confidence</span>
-            <span className="text-xs font-mono font-bold text-orange-400 mt-1.5">
-              {Math.round(currentReview.response_confidence * 100)}%
-            </span>
-          </div>
-        </div>
-
-        {/* Original Inbound Email */}
-        <div className="space-y-2">
-          <span className="text-[9px] font-mono text-gray-500 font-bold uppercase tracking-wider block">INBOUND MESSAGE</span>
-          <div className="p-4 rounded-xl border border-white/5 bg-[#0b0b0b]/40 text-xs text-gray-400 max-h-[120px] overflow-y-auto leading-relaxed">
-            {currentReview.email.body}
-          </div>
-        </div>
-
-        {/* Editable Generated Response */}
-        <div className="space-y-3.5">
-          <div className="flex justify-between items-center">
-            <span className="text-[9px] font-mono text-gray-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <Edit3 className="w-3.5 h-3.5 text-primary" />
-              <span>AI GENERATED DRAFT RESPONSE</span>
-            </span>
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="text-[10px] font-mono text-gray-400 hover:text-white px-2.5 py-1 rounded bg-white/5 border border-white/5 hover:border-white/10 transition-colors"
-            >
-              {isEditing ? 'Preview Mode' : 'Edit Response'}
+            <button onClick={() => setEditing((e) => !e)} className="focus-ring" style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, padding: '5px 11px', borderRadius: 7, background: 'rgba(255,255,255,.05)', border: '1px solid var(--line)', color: 'var(--fg-dim)' }}>
+              {editing ? 'Preview mode' : 'Edit response'}
             </button>
           </div>
-
-          <div className="relative">
-            {isEditing ? (
-              <textarea
-                value={editedResponse}
-                onChange={(e) => setEditedResponse(e.target.value)}
-                disabled={isExecuting}
-                rows={8}
-                className="w-full bg-[#030303]/95 border border-primary/25 rounded-xl p-4.5 text-xs text-gray-200 focus:outline-none focus:border-primary font-mono focus:ring-1 focus:ring-primary/20 leading-relaxed"
-              />
-            ) : (
-              <div className="w-full bg-[#0b0b0b]/75 border border-white/5 rounded-xl p-4.5 text-xs text-gray-300 font-sans whitespace-pre-line leading-relaxed max-h-[220px] overflow-y-auto">
-                {editedResponse}
-              </div>
-            )}
-          </div>
+          {editing ? (
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              disabled={isExecuting}
+              rows={9}
+              className="focus-ring"
+              style={{ width: '100%', resize: 'vertical', background: 'var(--ink-900)', border: '1px solid var(--accent-line)', borderRadius: 'var(--r)', padding: 15, fontFamily: 'var(--font-mono)', fontSize: 12, lineHeight: 1.6, color: 'var(--fg)', outline: 'none', boxSizing: 'border-box' }}
+            />
+          ) : (
+            <div style={{ padding: 15, borderRadius: 'var(--r)', border: '1px solid var(--line)', background: 'var(--ink-850)', fontSize: 13, lineHeight: 1.65, color: 'var(--fg-dim)', whiteSpace: 'pre-line', maxHeight: 230, overflowY: 'auto' }}>{draft}</div>
+          )}
         </div>
 
-        {/* Action Triggers */}
-        <div className="pt-2 border-t border-white/5 flex gap-4">
-          <button
-            onClick={handleReject}
-            disabled={isExecuting}
-            className="flex-1 py-3.5 rounded-xl border border-red-500/20 hover:border-red-500/40 bg-red-500/5 hover:bg-red-500/10 text-red-400 text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2"
-          >
-            {isExecuting ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
-            <span>Discard / Reject Draft</span>
+        {/* actions */}
+        <div className="review-actions" style={{ display: 'flex', gap: 14, paddingTop: 4 }}>
+          <button onClick={() => decide(false)} disabled={isExecuting} className="btn-iris-ghost focus-ring" style={{ flex: 1, background: 'color-mix(in oklab, var(--bad) 8%, transparent)', borderColor: 'color-mix(in oklab, var(--bad) 28%, transparent)', color: 'var(--bad)' }}>
+            <XCircle className="w-4 h-4" /> Discard draft
           </button>
-          <button
-            onClick={handleApprove}
-            disabled={isExecuting}
-            className="flex-1 py-3.5 rounded-xl bg-primary hover:bg-primary-light text-black text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-primary/10 hover:shadow-primary/30"
-          >
-            {isExecuting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-            <span>Approve & Dispatch Reply</span>
+          <button onClick={() => decide(true)} disabled={isExecuting} className="btn-iris-primary focus-ring" style={{ flex: 1 }}>
+            <CheckCircle className="w-4 h-4" /> Approve &amp; dispatch
           </button>
         </div>
       </div>
