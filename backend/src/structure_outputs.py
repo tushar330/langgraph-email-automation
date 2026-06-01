@@ -16,7 +16,7 @@ class CategorizeEmailOutput(BaseModel):
     )
     confidence: float = Field(
         ...,
-        description="A confidence score between 0.0 and 1.0 indicating how confident you are in this classification."
+        description="A calibrated confidence score between 0.0 and 1.0. Use the rubric in the prompt: 0.9+ only for unambiguous intent; 0.55-0.89 for normal cases; below 0.55 when two categories are plausible."
     )
 
 # **RAG Query Output**
@@ -45,5 +45,5 @@ class ProofReaderOutput(BaseModel):
     )
     confidence: float = Field(
         ...,
-        description="A confidence score between 0.0 and 1.0 indicating how confident you are in this evaluation."
+        description="A calibrated quality score between 0.0 and 1.0. Use the rubric in the prompt: 0.9+ only for exceptional replies; 0.7-0.89 for solid replies with minor gaps; below 0.55 for significant issues. Do not default to 0.9 — penalise vague or incomplete responses."
     )

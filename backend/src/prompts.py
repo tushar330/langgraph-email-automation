@@ -11,7 +11,14 @@ You are a highly skilled customer support specialist working for a SaaS company 
    - **product_enquiry**: When the email seeks information about a product feature, benefit, service, or pricing.
    - **customer_complaint**: When the email communicates dissatisfaction or a complaint.
    - **customer_feedback**: When the email provides feedback or suggestions regarding a product or service.
-   - **unrelated**: When the email content does not match any of the above categories.
+   - **unrelated**: When the email content does not match any of the above categories (job applications, spam, off-topic messages, etc.).
+
+3. Assign a **confidence score** using this rubric:
+   - **0.90–1.00**: The email has a single, unmistakable intent with no ambiguity.
+   - **0.75–0.89**: The intent is clear but there is a minor secondary signal (e.g., complaint that also contains a question).
+   - **0.55–0.74**: Two categories are plausible; one is more likely but the other cannot be ruled out.
+   - **0.40–0.54**: The email is genuinely ambiguous between two or more categories.
+   - **0.00–0.39**: The intent is unclear or the email is too short/vague to classify reliably.
 
 ---
 
@@ -23,6 +30,7 @@ You are a highly skilled customer support specialist working for a SaaS company 
 # **Notes:**
 
 * Base your categorization strictly on the email content provided; avoid making assumptions or overgeneralizing.
+* Assign confidence honestly — most emails should score between 0.55 and 0.92. A perfect 1.0 is very rare.
 """
 
 # Design RAG queries prompt template
@@ -147,14 +155,22 @@ You are provided with the **initial email** content written by the customer and 
 # **Instructions:**
 
 1. Analyze the generated email for:
-   - **Accuracy**: Does it appropriately address the customer’s inquiry based on the initial email and information provided?
-   - **Tone and Style**: Does it align with the company’s tone, standards, and writing style?
-   - **Quality**: Is it clear, concise, and professional?
+   - **Accuracy**: Does it directly and completely address the customer’s inquiry?
+   - **Tone and Style**: Is it professional, empathetic, and consistent with the company’s standards?
+   - **Quality**: Is it clear, concise, and free of errors?
+   - **Completeness**: Does it leave any key question unanswered?
 2. Determine if the email is:
-   - **Sendable**: The email meets all criteria and is ready to be sent.
-   - **Not Sendable**: The email contains significant issues requiring a rewrite.
-3. Only judge the email as "not sendable" (`send: false`) if lacks information or inversely contains irrelevant ones that would negatively impact customer satisfaction or professionalism.
-4. Provide actionable and clear feedback for the writer agent if the email is deemed "not sendable."
+   - **Sendable** (`send: true`): Meets all criteria and is ready to dispatch.
+   - **Not Sendable** (`send: false`): Has significant issues that would harm customer satisfaction.
+3. Only mark as "not sendable" if the reply lacks critical information, contains irrelevant content, or has a tone that would damage the customer relationship.
+4. Provide actionable feedback when marking as "not sendable" so the writer can improve.
+
+5. Assign a **confidence score** using this rubric — be honest and discriminating:
+   - **0.90–1.00**: Reply perfectly addresses every point in the inquiry; excellent tone; no improvements needed.
+   - **0.75–0.89**: Reply is solid with only minor gaps (e.g., slightly generic phrasing, one point not fully expanded).
+   - **0.55–0.74**: Reply partially covers the inquiry; a key detail is missing or the tone could be noticeably improved.
+   - **0.35–0.54**: Reply misses important points or has tone issues that would noticeably reduce customer satisfaction.
+   - **0.00–0.34**: Reply is off-topic, empty, or would clearly damage the customer relationship.
 
 ---
 
@@ -168,6 +184,7 @@ You are provided with the **initial email** content written by the customer and 
 
 # **Notes:**
 
-* Be objective and fair in your assessment. Only reject the email if necessary.
-* Ensure feedback is clear, concise, and actionable.
+* Be objective — most good replies should score between 0.70 and 0.88. Reserve 0.90+ for truly exceptional responses.
+* Do not default to a high score just because the email looks acceptable. Penalise vagueness, missing specifics, or generic filler.
+* Ensure feedback is specific and actionable so the writer can produce a better draft.
 """

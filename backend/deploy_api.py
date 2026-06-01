@@ -176,7 +176,8 @@ async def approve_workflow(request: ApproveRequest):
 
     # Update state keys for resumption
     state["approved"] = request.approved
-    state["workflow_status"] = "approved" if request.approved else "failed"
+    # "retry" (not "failed") so the graph re-runs classification + generation from scratch
+    state["workflow_status"] = "approved" if request.approved else "retry"
     state["force_review"] = False
     
     if request.generated_response is not None:

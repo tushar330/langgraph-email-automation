@@ -103,19 +103,38 @@ class Nodes:
         if state.get("workflow_status") == "failed":
             print(Fore.RED + "Workflow marked as failed/rejected by human. Routing to skip." + Style.RESET_ALL)
             return "skip_rejected"
-            
+
+        if state.get("workflow_status") == "retry":
+            print(Fore.YELLOW + "Human rejected draft — re-running workflow from scratch." + Style.RESET_ALL)
+            return "process"
+
         print(Fore.GREEN + "New emails to process" + Style.RESET_ALL)
         return "process"
-        
+
     def is_email_inbox_empty(self, state: GraphState) -> GraphState:
         emails_count = len(state.get("emails", []))
-        return {
+        updates = {
             "workflow_logs": self._add_log(
-                state, 
-                "is_email_inbox_empty", 
+                state,
+                "is_email_inbox_empty",
                 f"Checked email queue. Queue size: {emails_count}."
             )
         }
+        # On retry (human rejected), wipe all previous draft state so the AI starts fresh
+        if state.get("workflow_status") == "retry":
+            updates.update({
+                "writer_messages": [],
+                "trials": 0,
+                "generated_response": "",
+                "final_response": "",
+                "sendable": False,
+                "retrieved_docs": [],
+                "rag_queries": [],
+                "requires_human_review": False,
+                "approved": False,
+                "workflow_status": "processing",
+            })
+        return updates
 
     def categorize_email(self, state: GraphState) -> GraphState:
         """Categorizes the current email using the categorize_email agent."""

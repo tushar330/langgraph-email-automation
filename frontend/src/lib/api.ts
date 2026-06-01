@@ -13,7 +13,7 @@ export interface WorkflowLog {
 }
 
 export interface WorkflowExecutionResponse {
-  workflow_status: 'processing' | 'needs_review' | 'approved' | 'sent' | 'failed';
+  workflow_status: 'processing' | 'needs_review' | 'approved' | 'sent' | 'failed' | 'retry';
   email: {
     subject: string;
     sender: string;
