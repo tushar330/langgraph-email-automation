@@ -6,31 +6,19 @@ An enterprise-grade email orchestration engine featuring LangGraph state managem
 
 ### Deployment Links and Resources
 
-* Live Demo: [langgraph-email-automation.vercel.app](https://langgraph-email-automation-ocy28jn3p-tushars-projects-ec14c6a7.vercel.app)
+* Live Demo: [langgraph-email-automation.vercel.app](https://langgraph-email-automation-nine.vercel.app/)
 * Backend API: [agentia-backend-oalf.onrender.com](https://agentia-backend-oalf.onrender.com/simulation/emails)
 * Source Code: [github.com/tushar330/langgraph-email-automation](https://github.com/tushar330/langgraph-email-automation)
 
 ---
 
-## Project Preview
 
-Below is a preview of the interactive dashboard showing the main page structures.
 
-### Landing Page
-
-![Landing Page](./docs/screenshots/landing.png)
 
 ### Workflow Visualization Canvas
 
 ![Workflow Visualization](./docs/screenshots/workflow_visualization.png)
 
-### Simulation Dashboard
-
-![Simulation Dashboard](./docs/screenshots/simulation_dashboard.png)
-
-### Human Review Portal
-
-![Human Review Portal](./docs/screenshots/human_review.png)
 
 ---
 
