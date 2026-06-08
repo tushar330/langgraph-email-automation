@@ -4,6 +4,12 @@ venv/
 ENV/
 env/
 
+# AI tool configs (not for repo)
+.claude/
+design_handoff_agentia_redesign/
+frontend/CLAUDE.md
+frontend/AGENTS.md
+
 # Python Cache & Compiled files
 __pycache__/
 *.py[cod]
