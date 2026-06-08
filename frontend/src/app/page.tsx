@@ -298,9 +298,6 @@ export default function LandingPage() {
               <a href="https://www.linkedin.com/in/tushar-tiwari-72151a289/" target="_blank" rel="noopener noreferrer" className="footer-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--fg-dim)' }}>
                 <ExternalLink className="w-[15px] h-[15px]" /> LinkedIn
               </a>
-              <a href="#" className="footer-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--fg-dim)' }}>
-                <ExternalLink className="w-[15px] h-[15px]" /> Resume
-              </a>
             </div>
           </div>
         </div>

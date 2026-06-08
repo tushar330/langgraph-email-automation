@@ -106,25 +106,7 @@ export default function Header() {
         })}
       </nav>
 
-      {/* Status pill */}
-      <div className="header-meta flex items-center gap-2.5">
-        <span
-          className="inline-flex items-center gap-1.5 font-mono font-semibold uppercase rounded-full border"
-          style={{
-            fontSize: 10,
-            letterSpacing: '.12em',
-            padding: '4px 10px',
-            borderColor: 'var(--line-2)',
-            color: 'var(--fg-dim)',
-          }}
-        >
-          <span
-            className="rounded-full"
-            style={{ width: 6, height: 6, background: 'var(--ok)', boxShadow: '0 0 8px var(--ok)' }}
-          />
-          v2.0 · LIVE
-        </span>
-      </div>
+      <div className="header-meta" />
     </header>
   );
 }
