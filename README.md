@@ -12,16 +12,6 @@ An enterprise-grade email orchestration engine featuring LangGraph state managem
 
 ---
 
-
-
-
-### Workflow Visualization Canvas
-
-![Workflow Visualization](./docs/screenshots/workflow_visualization.png)
-
-
----
-
 ## Project Overview
 
 This project is an advanced AI systems engineering demonstration designed to automate customer support interactions. While traditional automation systems execute linear, black-box scripts, this platform treats email automation as an observable, structured agentic workflow. 
